@@ -1,5 +1,5 @@
 # Firic
-A programming language, made by me, Firice (obviously), programmed in Python.
+A programming language, programmed in Python.
 
 For those that are too lazy to open up the documentation:
 
