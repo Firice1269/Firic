@@ -12,12 +12,15 @@ In Firic, comments are written as "comment {commented text}", where {commented t
 For example,
 
 Python:
+
 \# This is a comment.
 	
 Firic:
+
 comment This is a comment.
 
 Output:
+
 
 
 ### Print Statements
