@@ -11,13 +11,16 @@ In Firic, comments are written as "comment {commented text}", where {commented t
 	
 For example,
 
+
 Python:
 
 \# This is a comment.
-	
+
+ 
 Firic:
 
 comment This is a comment.
+
 
 Output:
 
@@ -28,13 +31,16 @@ Print statements are built-in functions that allow information to be placed in t
 	
 For example,
 
+
 Python:
 
 print("Hello, world!")
-	
+
+ 
 Firic:
 
 print "Hello, world!"
+
 
 Output:
 
@@ -47,6 +53,7 @@ In Firic, variables are declared as "var {variable name} {variable value}", wher
 
 For example,
 
+
 Python:
 
 text = "Hello, world!"
@@ -54,12 +61,14 @@ print(text)
 text = "Goodbye, world!"
 print(text)
 
+
 Firic:
 
 var text "Hello, world!"
 print text
 text = "Goodbye, world!"
 print text
+
 
 Output:
 
@@ -73,6 +82,7 @@ In Firic, functions are defined as "func {function name}", where {function name}
 
 For example,
 
+
 Python:
 
 num1 = 12
@@ -80,6 +90,7 @@ num2 = 69
 def add():
 	print(num1 + num2)
 add()
+
 
 Firic:
 
@@ -89,6 +100,7 @@ func add
 print num1 + num2
 end
 add
+
 
 Output:
 
