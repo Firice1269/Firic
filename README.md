@@ -1,2 +1,2 @@
 # Firic
-A programming language, programmed in Python.
+A customized programming language, programmed in Python.
