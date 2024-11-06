@@ -1,5 +1,5 @@
 # Firic
-A customized programming language, programmed in Python.
+...is a customized programming language, made entirely within Python.
 
 ## Version History
 ### 1.0.0
