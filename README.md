@@ -5,12 +5,14 @@ A customized programming language, programmed in Python.
 ### 1.0.0
 Release Date: October 3rd, 2024
 
+
 Changelog:
 
 -First release
 
 ### 1.0.1
 Release Date: November 5th, 2024
+
 
 Changelog:
 
