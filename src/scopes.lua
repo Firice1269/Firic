@@ -84,13 +84,13 @@ local function repr(structure, indentation)
 	end
 
 	for _, v in ipairs(structure.value) do
+		for _ = 0, indentation, 1 do
+			text = text .. "  "
+		end
+
 		if structure.type == tokens.Dictionary then
 			text = text .. v.key .. ": "
 			v = v.value
-		end
-
-		for _ = 0, indentation, 1 do
-			text = text .. "  "
 		end
 
 		if v.type == tokens.Array or v.type == tokens.Dictionary then
