@@ -1,0 +1,72 @@
+{
+	"name": "Firic",
+	"scopeName": "source.fi",
+	"patterns": [
+		{"include": "#comment"},
+		{"include": "#constant"},
+		{"include": "#entity"},
+		{"include": "#invalid"},
+		{"include": "#keyword"},
+		{"include": "#string"},
+		{"include": "#variable"}
+	],
+	"repository": {
+		"comment": {
+			"name": "comment.line.double-dash.firic",
+			"match": "--.*$"
+		},
+		"constant": {
+			"patterns": [
+				{
+					"name": "constant.language.firic",
+					"match": "\\b(true|false|null)\\b"
+				},
+				{
+					"name": "constant.numeric.firic",
+					"begin": "[0-9]",
+					"end": "?=[^0-9.]"
+				}
+			]
+		},
+		"entity": {
+			"name": "entity.name.function.firic",
+			"match": "[a-zA-Z_][a-zA-Z0-9_]*(?=[(])"
+		},
+		"invalid": {
+			"patterns": [
+				{
+					"name": "invalid.illegal",
+					"match": "'"
+				}
+			]
+		},
+		"keyword": {
+			"patterns": [
+				{
+					"name": "keyword.control.firic",
+					"match": "\\b(break|continue|else|elseif|export|if|import|loop|return)\\b"
+				},
+				{
+					"name": "keyword.other.firic",
+					"match": "\\b(func|let|var)\\b"
+				}
+			]
+		},
+		"string": {
+			"name": "string.quoted.double.firic",
+			"begin": "\"",
+			"end": "\"",
+			"patterns": [
+				{
+					"name": "constant.character.escape.firic ",
+					"match": "\\\\."
+				}
+			]
+		},
+		"variable": {
+			"name": "variable.firic",
+			"begin": "[a-zA-Z_][a-zA-Z0-9_]*",
+			"end": "?=[^a-zA-Z0-9_]"
+		}
+	}
+}

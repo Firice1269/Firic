@@ -1,0 +1,31 @@
+{
+	"icon": "images/icon.png",
+	"publisher": "",
+  "name": "firic",
+  "displayName": "Firic",
+  "description": "Syntax highlighting for Firic",
+  "version": "0.1.0",
+  "engines": {
+    "vscode": "^1.100.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "contributes": {
+    "languages": [
+			{
+				"id": "firic",
+				"aliases": ["Firic", "firic"],
+				"extensions": [".fi"],
+				"configuration": "./language-configuration.json"
+    	}
+		],
+    "grammars": [
+			{
+				"language": "firic",
+				"scopeName": "source.fi",
+				"path": "./syntaxes/firic.json"
+			}
+		]
+  }
+}
