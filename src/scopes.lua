@@ -223,8 +223,12 @@ scopes.globalScope = scopes.Scope(
 				os.exit()
 			end
 
-			if arguments[1].type == tokens.Boolean then
+			if arguments[1].type == tokens.Array then
+				return tokens.Token(tokens.String, "\"array\"")
+			elseif arguments[1].type == tokens.Boolean then
 				return tokens.Token(tokens.String, "\"bool\"")
+			elseif arguments[1].type == tokens.Dictionary then
+				return tokens.Token(tokens.String, "\"dict\""
 			elseif arguments[1].type == tokens.Null then
 				return tokens.Token(tokens.String, "\"null\"")
 			elseif arguments[1].type == tokens.Number then
@@ -232,7 +236,7 @@ scopes.globalScope = scopes.Scope(
 			elseif arguments[1].type == tokens.String then
 				return tokens.Token(tokens.String, "\"str\"")
 			elseif arguments[1].type == tokens.NativeFunction or arguments[1].type == tokens.UserFunction then
-				return tokens.Token(tokens.String, "\"function\"")
+				return tokens.Token(tokens.String, "\"func\"")
 			end
 		end),
 		--FUNCTIONS
