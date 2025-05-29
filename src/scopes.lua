@@ -228,7 +228,7 @@ scopes.globalScope = scopes.Scope(
 			elseif arguments[1].type == tokens.Boolean then
 				return tokens.Token(tokens.String, "\"bool\"")
 			elseif arguments[1].type == tokens.Dictionary then
-				return tokens.Token(tokens.String, "\"dict\""
+				return tokens.Token(tokens.String, "\"dict\"")
 			elseif arguments[1].type == tokens.Null then
 				return tokens.Token(tokens.String, "\"null\"")
 			elseif arguments[1].type == tokens.Number then
