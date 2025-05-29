@@ -94,7 +94,7 @@ local function repr(structure, indentation)
 		end
 
 		if v.type == tokens.Array or v.type == tokens.Dictionary then
-			text = text .. repr(v.value, indentation + 1)
+			text = text .. repr(v, indentation + 1)
 		else
 			text = text .. v.value
 		end
@@ -113,7 +113,11 @@ local function repr(structure, indentation)
 	end
 
 	if string.gsub(text, " ", "") == "[\n]" or string.gsub(text, " ", "") == "{\n}" then
-		text = string.gsub(text, "\n", "")
+		text = string.gsub(
+			string.gsub(text, "\n", ""),
+			"  ",
+			""
+		)
 	end
 
 	return text

@@ -6,6 +6,20 @@ local tokens = require("src.tokens")
 local interpreter = {}
 
 
+function interpreter.evaluateArray(array, scope)
+	local values = {}
+
+	for _, v in ipairs(array.value) do
+		tablex.push(
+			values,
+			interpreter.evaluate(v, scope)
+		)
+	end
+
+	return tokens.Token(tokens.Array, values)
+end
+
+
 function interpreter.evaluateBinaryExpression(expression, scope)
 	local left     = interpreter.evaluate(expression.left, scope)
 	local operator = expression.operator
@@ -383,7 +397,16 @@ end
 
 
 function interpreter.evaluateIndexExpression(expression, scope)
-	local identifier = interpreter.evaluateIdentifier(expression.identifier, scope)
+	local identifier = expression.identifier
+
+	if type(identifier) == "string" then
+		identifier = interpreter.evaluateIdentifier(
+			ast.Node(ast.Identifier, identifier),
+			scope
+		)
+	else
+		identifier = interpreter.evaluate(identifier, scope)
+	end
 
 	if identifier.type == tokens.Array then
 		local index = interpreter.evaluate(expression.index, scope)
@@ -611,7 +634,7 @@ end
 
 function interpreter.evaluate(astNode, scope)
 	if astNode.type == ast.Array then
-		return tokens.Token(tokens.Array, astNode.value)
+		return interpreter.evaluateArray(astNode, scope)
 	elseif astNode.type == ast.BinaryExpression then
 		return interpreter.evaluateBinaryExpression(astNode.value, scope)
 	elseif astNode.type == ast.Dictionary then

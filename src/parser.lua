@@ -455,7 +455,7 @@ function parser.parsePrimaryExpression(tokenizedCode)
 		if tokenizedCode[1].value == "[" then
 			tablex.shift(tokenizedCode)
 
-			local identifier = token
+			local identifier = token.value
 			local index      = parser.parseExpression(tokenizedCode, true)
 
 			token = tablex.shift(tokenizedCode)
@@ -465,13 +465,36 @@ function parser.parsePrimaryExpression(tokenizedCode)
 				os.exit()
 			end
 
-			return ast.Node(
+			local expression = ast.Node(
 				ast.IndexExpression,
 				{
 					identifier = identifier,
 					index      = index,
 				}
 			)
+
+			while tokenizedCode[1].value == "[" do
+				tablex.shift(tokenizedCode)
+
+				index = parser.parseExpression(tokenizedCode, true)
+
+				token = tablex.shift(tokenizedCode)
+
+				if token.value ~= "]" then
+					print("ERROR: Unexpected token inside index (expected closed bracket): " .. tablex.repr(token))
+					os.exit()
+				end
+
+				expression = ast.Node(
+					ast.IndexExpression,
+					{
+						identifier = expression,
+						index      = index,
+					}
+				)
+			end
+
+			return expression
 		end
 
 		return ast.Node(ast.Identifier, token.value)
