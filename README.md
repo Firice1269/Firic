@@ -95,6 +95,8 @@ func multiply(a, b) {
 #### Built-In Functions
 All functions built into Firic are defined in Lua. The following is the full list of them, each with a description of what they do:
 
+The `len` function takes in one argument (which must be an array or a string) and returns its length.
+
 The `print` function takes in a variable number of arguments and prints all of them, separated by newlines.
 
 The `randint` function takes in two arguments (which must both be numbers) and returns a random integer between those two arguments (inclusive).
