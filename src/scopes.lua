@@ -151,7 +151,7 @@ scopes.globalScope = scopes.Scope(
 		--FUNCTIONS
 		["len"] = tokens.Token(tokens.NativeFunction, function(arguments)
 			if #arguments ~= 1 then
-				print("ERROR: Unexpected number of arguments inside function call (expected 1): " .. #arguments)
+				print("ERROR: Unexpected number of arguments to function 'len' (expected 1): " .. #arguments)
 				os.exit()
 			end
 
@@ -169,7 +169,7 @@ scopes.globalScope = scopes.Scope(
 					)
 				)
 			else
-				print("ERROR: Unexpected type of argument inside function call (expected array or string): " .. arguments[1].type)
+				print("ERROR: Unexpected type of argument to function 'len' (expected array or string): " .. arguments[1].type)
 				os.exit()
 			end
 		end),
@@ -196,18 +196,22 @@ scopes.globalScope = scopes.Scope(
 
 		["randint"] = tokens.Token(tokens.NativeFunction, function(arguments)
 			if #arguments ~= 2 then
-				print("ERROR: Unexpected number of arguments inside function call (expected 0): " .. #arguments)
+				print("ERROR: Unexpected number of arguments to function 'randint' (expected 0): " .. #arguments)
 				os.exit()
 			end
 
 			if arguments[1].type ~= tokens.Number then
-				print("ERROR: Unexpected type of argument inside function call (expected number): " .. arguments[1].type)
+				print("ERROR: Unexpected type of argument to function 'randint' (expected number): " .. arguments[1].type)
 				os.exit()
 			end
 
 			if arguments[2].type ~= tokens.Number then
-				print("ERROR: Unexpected type of argument inside function call (expected number): " .. arguments[2].type)
+				print("ERROR: Unexpected type of argument to function 'randint' (expected number): " .. arguments[2].type)
 				os.exit()
+			end
+
+			if arguments[2].value < arguments[1].value then
+				return tokens.Token(tokens.Number, arguments[1].value)
 			end
 
 			return tokens.Token(
@@ -219,7 +223,7 @@ scopes.globalScope = scopes.Scope(
 
 		["type"] = tokens.Token(tokens.NativeFunction, function(arguments)
 			if #arguments ~= 1 then
-				print("ERROR: Unexpected number of arguments inside function call (expected 1): " .. #arguments)
+				print("ERROR: Unexpected number of arguments to function 'type' (expected 1): " .. #arguments)
 				os.exit()
 			end
 

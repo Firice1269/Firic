@@ -12,9 +12,19 @@ function parser.parseStatement(tokenizedCode)
 	if token.value == "break" then
 		tablex.shift(tokenizedCode)
 
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
+			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+			os.exit()
+		end
+
 		return ast.Node(ast.Break)
 	elseif token.value == "continue" then
 		tablex.shift(tokenizedCode)
+
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
+			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+			os.exit()
+		end
 
 		return ast.Node(ast.Continue)
 	elseif token.value == "func" then
@@ -30,9 +40,16 @@ function parser.parseStatement(tokenizedCode)
 	elseif token.value == "return" then
 		tablex.shift(tokenizedCode)
 
+		local value = parser.parseExpression(tokenizedCode)
+
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
+			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+			os.exit()
+		end
+
 		return ast.Node(
 			ast.Return,
-			parser.parseExpression(tokenizedCode)
+			value
 		)
 	end
 
@@ -249,7 +266,7 @@ end
 
 
 function parser.parseVariableAssignment(tokenizedCode, brackets)
-	local left = parser.parseInequalExpression(tokenizedCode)
+	local left = parser.parseLogicalExpression(tokenizedCode)
 
 	if tokenizedCode[1].type == tokens.assignmentOperator then
 		local operator = tablex.shift(tokenizedCode).value
@@ -264,6 +281,48 @@ function parser.parseVariableAssignment(tokenizedCode, brackets)
 
 		left = ast.Node(
 			ast.VariableAssignment,
+			{
+				left     = left,
+				operator = operator,
+				right    = right,
+			}
+		)
+	end
+
+	return left
+end
+
+
+function parser.parseLogicalExpression(tokenizedCode)
+	local left = parser.parseBitwiseExpression(tokenizedCode)
+
+	while tokenizedCode[1].value == "&&" or tokenizedCode[1].value == "||" do
+		local operator = tablex.shift(tokenizedCode).value
+		local right    = parser.parseBitwiseExpression(tokenizedCode)
+
+		left = ast.Node(
+			ast.BinaryExpression,
+			{
+				left     = left,
+				operator = operator,
+				right    = right,
+			}
+		)
+	end
+
+	return left
+end
+
+
+function parser.parseBitwiseExpression(tokenizedCode)
+	local left = parser.parseInequalExpression(tokenizedCode)
+
+	while tokenizedCode[1].value == "&" or tokenizedCode[1].value == "|" or tokenizedCode[1].value == "^" do
+		local operator = tablex.shift(tokenizedCode).value
+		local right    = parser.parseInequalExpression(tokenizedCode)
+
+		left = ast.Node(
+			ast.BinaryExpression,
 			{
 				left     = left,
 				operator = operator,
@@ -303,9 +362,30 @@ end
 
 
 function parser.parseEqualExpression(tokenizedCode)
-	local left = parser.parseAdditiveExpression(tokenizedCode)
+	local left = parser.parseShiftExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "==" or tokenizedCode[1].value == "!=" do
+		local operator = tablex.shift(tokenizedCode).value
+		local right    = parser.parseShiftExpression(tokenizedCode)
+
+		left = ast.Node(
+			ast.BinaryExpression,
+			{
+				left     = left,
+				operator = operator,
+				right    = right,
+			}
+		)
+	end
+
+	return left
+end
+
+
+function parser.parseShiftExpression(tokenizedCode)
+	local left = parser.parseAdditiveExpression(tokenizedCode)
+
+	while tokenizedCode[1].value == "<<" or tokenizedCode[1].value == ">>" do
 		local operator = tablex.shift(tokenizedCode).value
 		local right    = parser.parseAdditiveExpression(tokenizedCode)
 
@@ -439,7 +519,7 @@ function parser.parsePrimaryExpression(tokenizedCode)
 			ast.Dictionary,
 			parser.parseDictionary(tokenizedCode)
 		)
-	elseif token.value == "-" or token.value == "!" then
+	elseif token.value == "-" or token.value == "~" or token.value == "!" then
 		local value = parser.parseExpression(tokenizedCode, false)
 
 		return ast.Node(

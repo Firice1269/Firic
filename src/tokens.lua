@@ -10,7 +10,7 @@ tokens.TokenType = {
 
 	LITERAL = {
 		BOOLEAN        = "boolean-literal",
-		FLOATING_POINT = "floating-point-livteral",
+		FLOATING_POINT = "floating-point-literal",
 		INTEGER        = "integer-literal",
 		NULL           = "null-literal",
 		STRING         = "string-literal",
@@ -19,6 +19,7 @@ tokens.TokenType = {
 	OPERATOR = {
 		ARITHMETIC    = "arithmetic-operator",
 		ASSIGNMENT    = "assignment-operator",
+		BITWISE       = "bitwise-operator",
 		COMPARISON    = "comparison-operator",
 		LOGICAL       = "logical-operator",
 		MISCELLANEOUS = "miscellaneous-operator",
@@ -54,6 +55,7 @@ tokens.str   = tokens.TokenType.LITERAL.STRING
 
 tokens.arithmeticOperator    = tokens.TokenType.OPERATOR.ARITHMETIC
 tokens.assignmentOperator    = tokens.TokenType.OPERATOR.ASSIGNMENT
+tokens.bitwiseOperator       = tokens.TokenType.OPERATOR.BITWISE
 tokens.comparisonOperator    = tokens.TokenType.OPERATOR.COMPARISON
 tokens.logicalOperator       = tokens.TokenType.OPERATOR.LOGICAL
 tokens.miscellaneousOperator = tokens.TokenType.OPERATOR.MISCELLANEOUS

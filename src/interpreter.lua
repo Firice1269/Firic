@@ -10,10 +10,7 @@ function interpreter.evaluateArray(array, scope)
 	local values = {}
 
 	for _, v in ipairs(array.value) do
-		tablex.push(
-			values,
-			interpreter.evaluate(v, scope)
-		)
+		tablex.push(values, interpreter.evaluate(v, scope))
 	end
 
 	return tokens.Token(tokens.Array, values)
@@ -31,56 +28,42 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Boolean, left.value < right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '<' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '<' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "<=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Boolean, left.value <= right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '<=' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '<=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "<<" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Boolean, left.value << right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '<<' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Boolean, left.value > right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '>' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '>' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Boolean, left.value >= right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '>=' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '>=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == ">>" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Boolean, left.value >> right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '>>' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "==" then
@@ -88,99 +71,73 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	elseif operator == "!=" then
 		result = tokens.Token(tokens.Boolean, left.value ~= right.value)
 	elseif operator == "&" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value & right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '&' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "&&" then
 		if left.type == tokens.Boolean and right.type == tokens.Boolean then
 			result = tokens.Token(tokens.Boolean, left.value and right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '&' (expected booleans): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '&&' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "|" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value | right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '|' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "||" then
 		if left.type == tokens.Boolean and right.type == tokens.Boolean then
 			result = tokens.Token(tokens.Boolean, left.value or right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '|' (expected booleans): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '||' (expected booleans): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "^" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value ~ right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '^' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "**" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value ^ right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '**' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '**' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "//" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value ^ (1 / right.value))
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '//' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '//' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "*" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value * right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '*' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '*' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "/" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value / right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '/' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '/' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "%" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value % right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '%' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '%' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "+" then
@@ -189,39 +146,17 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 		elseif left.type == tokens.String and right.type == tokens.String then
 			result = tokens.Token(
 				tokens.String,
-				string.sub(
-					left.value,
-					1,
-					#left.value - 1
-				)
-				.. string.sub(
-					right.value,
-					2,
-					#right.value
-				)
+				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '+' (expected number or string): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '+' (expected number or string): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "-" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value - right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '-' (expected numbers): "
-				..
-				tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '-' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	end
@@ -408,9 +343,9 @@ function interpreter.evaluateIndexExpression(expression, scope)
 		identifier = interpreter.evaluate(identifier, scope)
 	end
 
-	if identifier.type == tokens.Array then
-		local index = interpreter.evaluate(expression.index, scope)
+	local index = interpreter.evaluate(expression.index, scope)
 
+	if identifier.type == tokens.Array then
 		if index.type ~= tokens.Number then
 			print("ERROR: Unexpected index type inside index expression (expected number): " .. index.type)
 			os.exit()
@@ -424,8 +359,6 @@ function interpreter.evaluateIndexExpression(expression, scope)
 
 		return value
 	elseif identifier.type == tokens.Dictionary then
-		local index = interpreter.evaluate(expression.index, scope)
-
 		for _, v in ipairs(identifier.value) do
 			if index.value == v.key then
 				return v.value
@@ -433,6 +366,14 @@ function interpreter.evaluateIndexExpression(expression, scope)
 		end
 
 		return tokens.Token(tokens.Null, "null")
+	elseif identifier.type == tokens.String then
+		local value = string.sub(string.sub(identifier.value, 2, #identifier.value - 1), index.value + 1, index.value + 1)
+
+		if value == "" then
+			return tokens.Token(tokens.Null, "null")
+		end
+
+		return tokens.Token(tokens.String, "\"" .. value .. "\"")
 	end
 end
 
@@ -458,14 +399,21 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 		if value.type == tokens.Number then
 			result = tokens.Token(tokens.Number, -value.value)
 		else
-			print("ERROR: Unexpected argument for operator '-' (expected number): " .. tablex.repr(value))
+			print("ERROR: Unexpected argument type for operator '-' (expected number): " .. value.type)
+			os.exit()
+		end
+	elseif operator == "~" then
+		if value.type == tokens.Number then
+			result = tokens.Token(tokens.Number, ~value.value)
+		else
+			print("ERROR: Unexpected argument type for operator '~' (expected number): " .. value.type)
 			os.exit()
 		end
 	elseif operator == "!" then
 		if value.type == tokens.Boolean then
 			result = tokens.Token(tokens.Boolean, not value.value)
 		else
-			print("ERROR: Unexpected argument for operator '!' (expected boolean): " .. tablex.repr(value))
+			print("ERROR: Unexpected argument type for operator '!' (expected boolean): " .. value.type)
 			os.exit()
 		end
 	end
@@ -490,94 +438,87 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 	local result = right
 
 	if operator == "&=" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value & right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '&=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "&&=" then
 		if left.type == tokens.Boolean and right.type == tokens.Boolean then
 			result = tokens.Token(tokens.Boolean, left.value and right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '&=' (expected booleans): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '&&=' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "|=" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value | right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '|=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "||=" then
 		if left.type == tokens.Boolean and right.type == tokens.Boolean then
 			result = tokens.Token(tokens.Boolean, left.value or right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '|=' (expected booleans): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '||=' (expected booleans): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "^=" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value ~ right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '^=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == "<<=" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value << right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '<<=' (expected numbers): " .. left.type .. ", " .. right.type)
+			os.exit()
+		end
+	elseif operator == ">>=" then
+		if left.type == tokens.Number and right.type == tokens.Number then
+			result = tokens.Token(tokens.Number, left.value >> right.value)
+		else
+			print("ERROR: Unexpected argument types for operator '>>=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "**=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value ^ right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '**=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '**=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "//=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value ^ (1 / right.value))
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '//=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '//=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "*=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value * right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '*=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '*=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "/=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value / right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '/=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '/=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "%=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value % right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '%=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '%=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "+=" then
@@ -586,38 +527,17 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 		elseif left.type == tokens.String and right.type == tokens.String then
 			result = tokens.Token(
 				tokens.String,
-				string.sub(
-					left.value,
-					1,
-					#left.value - 1
-				)
-				.. string.sub(
-					right.value,
-					2,
-					#right.value
-				)
+				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "-=" then
 		if left.type == tokens.Number and right.type == tokens.Number then
 			result = tokens.Token(tokens.Number, left.value - right.value)
 		else
-			print(
-				"ERROR: Unexpected argument types for operator '-=' (expected numbers): "
-				.. tablex.repr(left)
-				.. ", "
-				.. tablex.repr(right)
-			)
-
+			print("ERROR: Unexpected argument types for operator '-=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	end
