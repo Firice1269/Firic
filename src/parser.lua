@@ -12,19 +12,23 @@ function parser.parseStatement(tokenizedCode)
 	if token.value == "break" then
 		tablex.shift(tokenizedCode)
 
-		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
-			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
+			print("ERROR: Unexpected token inside break statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
 			os.exit()
 		end
+
+		tablex.shift(tokenizedCode)
 
 		return ast.Node(ast.Break)
 	elseif token.value == "continue" then
 		tablex.shift(tokenizedCode)
 
-		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
-			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
+			print("ERROR: Unexpected token inside continue statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
 			os.exit()
 		end
+
+		tablex.shift(tokenizedCode)
 
 		return ast.Node(ast.Continue)
 	elseif token.value == "func" then
@@ -42,10 +46,12 @@ function parser.parseStatement(tokenizedCode)
 
 		local value = parser.parseExpression(tokenizedCode)
 
-		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= "}" then
-			print("ERROR: Unexpected token inside return statement (expected newline or closed brace): " .. tablex.repr(tokenizedCode[1]))
+		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
+			print("ERROR: Unexpected token inside return statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
 			os.exit()
 		end
+
+		tablex.shift(tokenizedCode)
 
 		return ast.Node(
 			ast.Return,
@@ -53,7 +59,7 @@ function parser.parseStatement(tokenizedCode)
 		)
 	end
 
-	return parser.parseExpression(tokenizedCode, false)
+	return parser.parseExpression(tokenizedCode)
 end
 
 
@@ -118,7 +124,7 @@ function parser.parseIfStatement(tokenizedCode)
 	local condition
 
 	if keyword == "elseif" or keyword == "if" then
-		condition = parser.parseExpression(tokenizedCode, false)
+		condition = parser.parseExpression(tokenizedCode)
 	end
 
 	local token = tablex.shift(tokenizedCode)
@@ -140,6 +146,10 @@ function parser.parseIfStatement(tokenizedCode)
 	if token.value ~= "}" then
 		print("ERROR: Unexpected token inside " .. keyword .. " statement (expected closed brace): " .. tablex.repr(token))
 		os.exit()
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		tablex.shift(tokenizedCode)
 	end
 
 	local statement = ast.Node(
@@ -199,10 +209,18 @@ function parser.parseVariableDeclaration(tokenizedCode, brackets)
 
 	local token = tablex.shift(tokenizedCode)
 
-	if (token.type == tokens.eol and not brackets) then
+	if (token.type == tokens.eol and not brackets) or tokenizedCode[1].value == ";" then
 		if constant then
 			print("ERROR: Unexpected token inside variable declaration (expected equals): " .. tablex.repr(token))
 			os.exit()
+		end
+
+		if tokenizedCode[1].value == ";" then
+			token = tablex.shift(tokenizedCode)
+
+			while tokenizedCode[1].type == tokens.eol do
+				tablex.shift(tokenizedCode)
+			end
 		end
 
 		return ast.Node(
@@ -213,7 +231,7 @@ function parser.parseVariableDeclaration(tokenizedCode, brackets)
 			}
 		)
 	elseif token.value ~= "=" then
-		print("ERROR: Unexpected token inside variable declaration (expected equals or newline): " .. tablex.repr(token))
+		print("ERROR: Unexpected token inside variable declaration (expected equals, newline, or semicolon): " .. tablex.repr(token))
 		os.exit()
 	end
 
@@ -226,11 +244,13 @@ function parser.parseVariableDeclaration(tokenizedCode, brackets)
 		}
 	)
 
-	token = tablex.shift(tokenizedCode)
+	if token.value ~= ";" then
+		token = tablex.shift(tokenizedCode)
 
-	if not (token.type == tokens.eol and not brackets) then
-		print("ERROR: Unexpected token inside variable declaration (expected newline): " .. tablex.repr(token))
-		os.exit()
+		if not (token.type == tokens.eol and not brackets) and token.value ~= ";" then
+			print("ERROR: Unexpected token inside variable declaration (expected newline or semicolon): " .. tablex.repr(token))
+			os.exit()
+		end
 	end
 
 	return declaration
@@ -238,6 +258,8 @@ end
 
 
 function parser.parseExpression(tokenizedCode, brackets)
+	brackets = brackets or false
+
 	if brackets then
 		local bracketCount = 1
 		local indices      = {}
@@ -274,7 +296,7 @@ function parser.parseVariableAssignment(tokenizedCode, brackets)
 
 		local token = tablex.shift(tokenizedCode)
 
-		if not (token.type == tokens.eol and not brackets) then
+		if not (token.type == tokens.eol and not brackets) and token.value ~= ";" then
 			print("ERROR: Unexpected token inside variable assignment (expected newline or semicolon): " .. tablex.repr(token))
 			os.exit()
 		end
@@ -520,7 +542,7 @@ function parser.parsePrimaryExpression(tokenizedCode)
 			parser.parseDictionary(tokenizedCode)
 		)
 	elseif token.value == "-" or token.value == "~" or token.value == "!" then
-		local value = parser.parseExpression(tokenizedCode, false)
+		local value = parser.parseExpression(tokenizedCode)
 
 		return ast.Node(
 			ast.UnaryExpression,

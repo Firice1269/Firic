@@ -86,6 +86,7 @@ function tokenizer.tokenize(sourceCode)
 		["]"] = {},
 		[","] = {},
 		["}"] = {},
+		[";"] = {},
 	}
 
 	local comment = false
