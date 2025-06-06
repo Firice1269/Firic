@@ -244,7 +244,7 @@ loop {
   print(x)
   x += 1
 
-  if x > 10 {break}
+  if x > 10 { break; }
 }
 ```
 
@@ -256,12 +256,12 @@ loop {
 var x = 1
 
 loop {
-  if x % 2 == 1 {continue}
+  if x % 2 == 1 { continue; }
 
   print(x)
   x += 1
 
-  if x > 10 {break}
+  if x > 10 { break; }
 }
 ```
 
@@ -288,7 +288,7 @@ func multiply(a, b) {
 
     result += b
 
-    if a == 0 {break}
+    if a == 0 { break; }
   }
 
   return result
