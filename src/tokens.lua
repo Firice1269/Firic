@@ -9,10 +9,8 @@ tokens.TokenType = {
 	PUNCTUATION = "punctuation",
 
 	LITERAL = {
-		BOOLEAN        = "boolean-literal",
 		FLOATING_POINT = "floating-point-literal",
 		INTEGER        = "integer-literal",
-		NULL           = "null-literal",
 		STRING         = "string-literal",
 	},
 
@@ -26,18 +24,18 @@ tokens.TokenType = {
 	},
 
 	RUNTIME = {
-		ARRAY      = "Array",
-		BOOLEAN    = "Boolean",
-		DICTIONARY = "Dictionary",
-		NULL       = "Null",
-		NUMBER     = "Number",
-		STRING     = "String",
+		ARRAY      = "array",
+		BOOLEAN    = "boolean",
+		DICTIONARY = "dictionary",
+		NULL       = "null",
+		NUMBER     = "number",
+		STRING     = "string",
 
 		FUNCTION = {
-			NATIVE = "NativeFunction",
-			USER   = "UserFunction",
-		}
-	}
+			NATIVE = "native-function",
+			USER   = "user-function",
+		},
+	},
 }
 
 
@@ -47,10 +45,8 @@ tokens.identifier  = tokens.TokenType.IDENTIFIER
 tokens.keyword     = tokens.TokenType.KEYWORD
 tokens.punctuation = tokens.TokenType.PUNCTUATION
 
-tokens.bool  = tokens.TokenType.LITERAL.BOOLEAN
 tokens.float = tokens.TokenType.LITERAL.FLOATING_POINT
 tokens.int   = tokens.TokenType.LITERAL.INTEGER
-tokens.null  = tokens.TokenType.LITERAL.NULL
 tokens.str   = tokens.TokenType.LITERAL.STRING
 
 tokens.arithmeticOperator    = tokens.TokenType.OPERATOR.ARITHMETIC
@@ -60,14 +56,14 @@ tokens.comparisonOperator    = tokens.TokenType.OPERATOR.COMPARISON
 tokens.logicalOperator       = tokens.TokenType.OPERATOR.LOGICAL
 tokens.miscellaneousOperator = tokens.TokenType.OPERATOR.MISCELLANEOUS
 
-tokens.Array          = tokens.TokenType.RUNTIME.ARRAY
-tokens.Boolean        = tokens.TokenType.RUNTIME.BOOLEAN
-tokens.Dictionary     = tokens.TokenType.RUNTIME.DICTIONARY
-tokens.Null           = tokens.TokenType.RUNTIME.NULL
-tokens.Number         = tokens.TokenType.RUNTIME.NUMBER
-tokens.String         = tokens.TokenType.RUNTIME.STRING
-tokens.NativeFunction = tokens.TokenType.RUNTIME.FUNCTION.NATIVE
-tokens.UserFunction   = tokens.TokenType.RUNTIME.FUNCTION.USER
+tokens.array          = tokens.TokenType.RUNTIME.ARRAY
+tokens.boolean        = tokens.TokenType.RUNTIME.BOOLEAN
+tokens.dictionary     = tokens.TokenType.RUNTIME.DICTIONARY
+tokens.null           = tokens.TokenType.RUNTIME.NULL
+tokens.number         = tokens.TokenType.RUNTIME.NUMBER
+tokens.string         = tokens.TokenType.RUNTIME.STRING
+tokens.nativeFunction = tokens.TokenType.RUNTIME.FUNCTION.NATIVE
+tokens.userFunction   = tokens.TokenType.RUNTIME.FUNCTION.USER
 
 
 function tokens.Token(type, value)

@@ -194,9 +194,9 @@ function tokenizer.tokenize(sourceCode)
 			if quoteCount == 1 then
 				if escape then
 					if character == "\\" or character == "\"" then
-						tempString = tempString .. character
+						tempString = tempString .. "\\" .. character
 					elseif character == "n" then
-						tempString = tempString .. "\n"
+						tempString = tempString .. "\\n"
 					else
 						print("ERROR: Invalid escape sequence: \\" .. character)
 						os.exit()
@@ -244,9 +244,34 @@ function tokenizer.tokenize(sourceCode)
 						string.find(character, "[%w_]", 1, false) ~= nil
 						and tempString ~= ""
 					)
-				then --tokenize words
+				then
+					if tempNumber == "." then
+						tablex.push(
+							tokenizedCode,
+							tokens.Token(tokens.miscellaneousOperator, ".")
+						)
+
+						tempNumber = ""
+					end
+
 					tempString = tempString .. character
-				elseif string.find(character, "[%d%.]", 1, false) ~= nil then --tokenize numbers
+				elseif string.find(character, "[%d%.]", 1, false) ~= nil then
+					if tempString ~= "" then --push finished words
+						if KEYWORDS[tempString] ~= nil then
+							tablex.push(
+								tokenizedCode,
+								tokens.Token(tokens.keyword, tempString)
+							)
+						else
+							tablex.push(
+								tokenizedCode,
+								tokens.Token(tokens.identifier, tempString)
+							)
+						end
+
+						tempString = ""
+					end
+
 					tempNumber = tempNumber .. character
 				end
 			else
@@ -296,7 +321,6 @@ function tokenizer.tokenize(sourceCode)
 					tempNumber = ""
 				end
 
-				--tokenize operators
 				if character == ">" then
 					greaterCount = greaterCount + 1
 				elseif character == "<" then
@@ -458,7 +482,7 @@ function tokenizer.tokenize(sourceCode)
 				end
 			end
 
-			if OPERATORS[character] == nil and quoteCount == 0 then --push finished operators
+			if OPERATORS[character] == nil and quoteCount == 0 then
 				if fewerCount == 1 then
 					tablex.push(
 						tokenizedCode,
@@ -594,7 +618,7 @@ function tokenizer.tokenize(sourceCode)
 					equalsCount = 0
 				end
 
-				if PUNCTUATION[character] ~= nil then --push punctuation
+				if PUNCTUATION[character] ~= nil then
 					if character ~= " " then
 						tablex.push(
 							tokenizedCode,

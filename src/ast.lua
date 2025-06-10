@@ -8,6 +8,7 @@ ast.NodeType = {
 		BINARY     = "BinaryExpression",
 		CALL       = "FunctionCall",
 		INDEX      = "IndexExpression",
+		MEMBER     = "MemberExpression",
 		UNARY      = "UnaryExpression",
 	},
 
@@ -41,6 +42,7 @@ ast.Program = ast.NodeType.PROGRAM
 ast.BinaryExpression = ast.NodeType.EXPRESSION.BINARY
 ast.FunctionCall     = ast.NodeType.EXPRESSION.CALL
 ast.IndexExpression  = ast.NodeType.EXPRESSION.INDEX
+ast.MemberExpression = ast.NodeType.EXPRESSION.MEMBER
 ast.UnaryExpression  = ast.NodeType.EXPRESSION.UNARY
 
 ast.Array      = ast.NodeType.LITERAL.ARRAY

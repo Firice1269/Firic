@@ -86,6 +86,10 @@ function parser.parseFunctionDefinition(tokenizedCode)
 		tablex.push(parameters, v.value)
 	end
 
+	while tokenizedCode[1].type == tokens.eol do
+		tablex.shift(tokenizedCode)
+	end
+
 	local token = tablex.shift(tokenizedCode)
 
 	if token.value ~= "{" then
@@ -125,6 +129,10 @@ function parser.parseIfStatement(tokenizedCode)
 
 	if keyword == "elseif" or keyword == "if" then
 		condition = parser.parseExpression(tokenizedCode)
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		tablex.shift(tokenizedCode)
 	end
 
 	local token = tablex.shift(tokenizedCode)
@@ -228,6 +236,7 @@ function parser.parseVariableDeclaration(tokenizedCode, brackets)
 			{
 				name     = identifier.value,
 				constant = constant,
+				value    = ast.Node(ast.Identifier, "null")
 			}
 		)
 	elseif token.value ~= "=" then
@@ -468,11 +477,11 @@ end
 
 
 function parser.parseExponentialExpression(tokenizedCode)
-	local left = parser.parseFunctionCall(tokenizedCode)
+	local left = parser.parseMemberExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "**" or tokenizedCode[1].value == "//" do
 		local operator = tablex.shift(tokenizedCode).value
-		local right    = parser.parseFunctionCall(tokenizedCode)
+		local right    = parser.parseMemberExpression(tokenizedCode)
 
 		left = ast.Node(
 			ast.BinaryExpression,
@@ -488,32 +497,24 @@ function parser.parseExponentialExpression(tokenizedCode)
 end
 
 
-function parser.parseFunctionCall(tokenizedCode)
-	local member = parser.parsePrimaryExpression(tokenizedCode)
+function parser.parseMemberExpression(tokenizedCode)
+	local left = parser.parsePrimaryExpression(tokenizedCode)
 
-	if tokenizedCode[1].value == "(" then
-		local call = ast.Node(
-			ast.FunctionCall,
+	while tokenizedCode[1].value == "." do
+		tablex.shift(tokenizedCode)
+
+		local right = parser.parsePrimaryExpression(tokenizedCode)
+
+		left = ast.Node(
+			ast.MemberExpression,
 			{
-				name      = member,
-				arguments = parser.parseArguments(tokenizedCode),
+				left  = left,
+				right = right,
 			}
 		)
-
-		while tokenizedCode[1].value == "(" do
-			call = ast.Node(
-				ast.FunctionCall,
-				{
-					name      = call,
-					arguments = parser.parseArguments(tokenizedCode),
-				}
-			)
-		end
-
-		return call
 	end
 
-	return member
+	return left
 end
 
 
@@ -554,7 +555,9 @@ function parser.parsePrimaryExpression(tokenizedCode)
 	elseif token.type == tokens.str then
 		return ast.Node(ast.String, token.value)
 	elseif token.type == tokens.identifier then
-		if tokenizedCode[1].value == "[" then
+		if tokenizedCode[1].value == "(" then
+			return parser.parseFunctionCall(tokenizedCode, token)
+		elseif tokenizedCode[1].value == "[" then
 			tablex.shift(tokenizedCode)
 
 			local identifier = token.value
@@ -606,6 +609,39 @@ function parser.parsePrimaryExpression(tokenizedCode)
 		print("ERROR: Unexpected token: " .. tablex.repr(token))
 		os.exit()
 	end
+end
+
+
+function parser.parseFunctionCall(tokenizedCode, callee)
+	callee = ast.Node(ast.Identifier, callee.value)
+
+	if tokenizedCode[1].value == "(" then
+		local call = ast.Node(
+			ast.FunctionCall,
+			{
+				callee    = callee,
+				arguments = parser.parseArguments(tokenizedCode),
+			}
+		)
+
+		while tokenizedCode[1].value == "(" do
+			call = ast.Node(
+				ast.FunctionCall,
+				{
+					callee    = call,
+					arguments = parser.parseArguments(tokenizedCode),
+				}
+			)
+		end
+
+		if tokenizedCode[1].value == ";" then
+			tablex.shift(tokenizedCode)
+		end
+
+		return call
+	end
+
+	return callee
 end
 
 

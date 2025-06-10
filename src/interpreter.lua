@@ -13,7 +13,7 @@ function interpreter.evaluateArray(array, scope)
 		tablex.push(values, interpreter.evaluate(v, scope))
 	end
 
-	return tokens.Token(tokens.Array, values)
+	return tokens.Token(tokens.array, values)
 end
 
 
@@ -25,127 +25,127 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	local result
 
 	if operator == "<" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value < right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value < right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '<' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "<=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value <= right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value <= right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '<=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "<<" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value << right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value << right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '<<' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value > right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value > right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '>' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value >= right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value >= right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '>=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">>" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Boolean, left.value >> right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.boolean, left.value >> right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '>>' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "==" then
-		result = tokens.Token(tokens.Boolean, left.value == right.value)
+		result = tokens.Token(tokens.boolean, left.value == right.value)
 	elseif operator == "!=" then
-		result = tokens.Token(tokens.Boolean, left.value ~= right.value)
+		result = tokens.Token(tokens.boolean, left.value ~= right.value)
 	elseif operator == "&" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value & right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value & right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '&' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "&&" then
-		if left.type == tokens.Boolean and right.type == tokens.Boolean then
-			result = tokens.Token(tokens.Boolean, left.value and right.value)
+		if left.type == tokens.boolean and right.type == tokens.boolean then
+			result = tokens.Token(tokens.boolean, left.value and right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '&&' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "|" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value | right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value | right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '|' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "||" then
-		if left.type == tokens.Boolean and right.type == tokens.Boolean then
-			result = tokens.Token(tokens.Boolean, left.value or right.value)
+		if left.type == tokens.boolean and right.type == tokens.boolean then
+			result = tokens.Token(tokens.boolean, left.value or right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '||' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "^" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ~ right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ~ right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '^' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "**" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ^ right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ^ right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '**' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "//" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ^ (1 / right.value))
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 		else
 			print("ERROR: Unexpected argument types for operator '//' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "*" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value * right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value * right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '*' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "/" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value / right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value / right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '/' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "%" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value % right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value % right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '%' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "+" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value + right.value)
-		elseif left.type == tokens.String and right.type == tokens.String then
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value + right.value)
+		elseif left.type == tokens.string and right.type == tokens.string then
 			result = tokens.Token(
-				tokens.String,
+				tokens.string,
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
@@ -153,8 +153,8 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 			os.exit()
 		end
 	elseif operator == "-" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value - right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value - right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '-' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
@@ -173,7 +173,7 @@ function interpreter.evaluateDictionary(dictionary, scope)
 		tablex.push(
 			values,
 			{
-				key   = interpreter.evaluate(v.key, scope).value,
+				key   = interpreter.evaluate(v.key, scope),
 				value = interpreter.evaluate(v.value, scope),
 			}
 		)
@@ -190,7 +190,7 @@ function interpreter.evaluateDictionary(dictionary, scope)
 		end
 	end
 
-	return tokens.Token(tokens.Dictionary, values)
+	return tokens.Token(tokens.dictionary, values)
 end
 
 
@@ -201,11 +201,11 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		tablex.push(arguments, interpreter.evaluate(v, scope))
 	end
 
-	local func = interpreter.evaluate(expression.name, scope)
+	local func = interpreter.evaluate(expression.callee, scope)
 
-	if func.type == tokens.NativeFunction then
-		return func.value(arguments) or tokens.Token(tokens.Null, "null")
-	elseif func.type == tokens.UserFunction then
+	if func.type == tokens.nativeFunction then
+		return func.value(arguments) or tokens.Token(tokens.null, "null")
+	elseif func.type == tokens.userFunction then
 		func = func.value
 
 		local parent = scope
@@ -215,7 +215,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			scopes.declareVariable(v, arguments[i], false, scope)
 		end
 
-		local value = tokens.Token(tokens.Null, "null")
+		local value = tokens.Token(tokens.null, "null")
 
 		for _, v in ipairs(func.body) do
 			v = interpreter.evaluate(v, scope)
@@ -231,13 +231,8 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		return value
 	end
 
-	print("ERROR: Unexpected call (expected function): " .. tablex.repr(func))
+	print("ERROR: Unexpected type of callee (expected function): " .. tablex.repr(func))
 	os.exit()
-end
-
-
-function interpreter.evaluateFunctionDefinition(statement, scope)
-	return scopes.declareVariable(statement.name, tokens.Token(tokens.UserFunction, statement), true, scope)
 end
 
 
@@ -271,6 +266,46 @@ function interpreter.evaluateLoop(statement, scope)
 end
 
 
+function interpreter.evaluateMemberExpression(expression, scope)
+	local left   = expression.left
+	local object = interpreter.evaluate(left, scope)
+
+	if left.type == ast.Identifier then
+		left.type = tokens.identifier
+	elseif left.type == ast.MemberExpression then
+		while left.type == ast.MemberExpression do
+			left = left.value.left
+		end
+	else
+		left = object
+	end
+
+	local member = expression.right
+
+	if object.type == tokens.array then
+		scope = scopes.Scope(
+			scope,
+			scopes.array.constants,
+			scopes.array.variables
+		)
+	elseif object.type == tokens.dictionary then
+		scope = scopes.Scope(
+			scope,
+			scopes.dictionary.constants,
+			scopes.dictionary.variables
+		)
+	end
+
+	if member.type == ast.FunctionCall then
+		table.insert(member.value.arguments, 1, scope)
+		table.insert(member.value.arguments, 1, object)
+		table.insert(member.value.arguments, 1, left)
+	end
+
+	return interpreter.evaluate(member, scope)
+end
+
+
 function interpreter.evaluateIdentifier(identifier, scope)
 	return scopes.lookupVariable(identifier.value, scope)
 end
@@ -287,7 +322,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 			condition = condition and not v.value
 		end
 
-		condition = tokens.Token(tokens.Boolean, condition)
+		condition = tokens.Token(tokens.boolean, condition)
 	elseif statement.keyword == "elseif" then
 		for _, v in ipairs(conditions) do
 			condition = condition and not v.value
@@ -295,19 +330,19 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 
 		local v = interpreter.evaluate(statement.condition, scope)
 
-		if v.type ~= tokens.Boolean then
+		if v.type ~= tokens.boolean then
 			print("ERROR: Unexpected elseif statement condition type (expected boolean): " .. tablex.repr(v))
 			os.exit()
 		end
 
-		condition = tokens.Token(tokens.Boolean, condition and v.value)
+		condition = tokens.Token(tokens.boolean, condition and v.value)
 		tablex.push(conditions, condition)
 	else
 		condition = interpreter.evaluate(statement.condition, scope)
 		tablex.push(conditions, condition)
 	end
 
-	if condition.type ~= tokens.Boolean then
+	if condition.type ~= tokens.boolean then
 		print("ERROR: Unexpected if statement condition type (expected boolean): " .. tablex.repr(condition))
 		os.exit()
 	end
@@ -345,41 +380,45 @@ function interpreter.evaluateIndexExpression(expression, scope)
 
 	local index = interpreter.evaluate(expression.index, scope)
 
-	if identifier.type == tokens.Array then
-		if index.type ~= tokens.Number then
+	if identifier.type == tokens.array then
+		if index.type ~= tokens.number then
 			print("ERROR: Unexpected index type inside index expression (expected number): " .. index.type)
 			os.exit()
+		end
+
+		if index.value < 0 then
+			index.value = index.value + #identifier.value
 		end
 
 		local value = identifier.value[index.value + 1]
 
 		if value == nil then
-			return tokens.Token(tokens.Null, "null")
+			return tokens.Token(tokens.null, "null")
 		end
 
 		return value
-	elseif identifier.type == tokens.Dictionary then
+	elseif identifier.type == tokens.dictionary then
 		for _, v in ipairs(identifier.value) do
-			if index.value == v.key then
+			if index.value == v.key.value then
 				return v.value
 			end
 		end
 
-		return tokens.Token(tokens.Null, "null")
-	elseif identifier.type == tokens.String then
+		return tokens.Token(tokens.null, "null")
+	elseif identifier.type == tokens.string then
 		local value = string.sub(string.sub(identifier.value, 2, #identifier.value - 1), index.value + 1, index.value + 1)
 
 		if value == "" then
-			return tokens.Token(tokens.Null, "null")
+			return tokens.Token(tokens.null, "null")
 		end
 
-		return tokens.Token(tokens.String, "\"" .. value .. "\"")
+		return tokens.Token(tokens.string, "\"" .. value .. "\"")
 	end
 end
 
 
 function interpreter.evaluateProgram(program, scope)
-	local value = tokens.Token(tokens.Null, "null")
+	local value = tokens.Token(tokens.null, "null")
 
 	for _, statement in ipairs(program.value) do
 		value = interpreter.evaluate(statement, scope)
@@ -396,22 +435,22 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 	local result
 
 	if operator == "-" then
-		if value.type == tokens.Number then
-			result = tokens.Token(tokens.Number, -value.value)
+		if value.type == tokens.number then
+			result = tokens.Token(tokens.number, -value.value)
 		else
 			print("ERROR: Unexpected argument type for operator '-' (expected number): " .. value.type)
 			os.exit()
 		end
 	elseif operator == "~" then
-		if value.type == tokens.Number then
-			result = tokens.Token(tokens.Number, ~value.value)
+		if value.type == tokens.number then
+			result = tokens.Token(tokens.number, ~value.value)
 		else
 			print("ERROR: Unexpected argument type for operator '~' (expected number): " .. value.type)
 			os.exit()
 		end
 	elseif operator == "!" then
-		if value.type == tokens.Boolean then
-			result = tokens.Token(tokens.Boolean, not value.value)
+		if value.type == tokens.boolean then
+			result = tokens.Token(tokens.boolean, not value.value)
 		else
 			print("ERROR: Unexpected argument type for operator '!' (expected boolean): " .. value.type)
 			os.exit()
@@ -438,95 +477,95 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 	local result = right
 
 	if operator == "&=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value & right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value & right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '&=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "&&=" then
-		if left.type == tokens.Boolean and right.type == tokens.Boolean then
-			result = tokens.Token(tokens.Boolean, left.value and right.value)
+		if left.type == tokens.boolean and right.type == tokens.boolean then
+			result = tokens.Token(tokens.boolean, left.value and right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '&&=' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "|=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value | right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value | right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '|=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "||=" then
-		if left.type == tokens.Boolean and right.type == tokens.Boolean then
-			result = tokens.Token(tokens.Boolean, left.value or right.value)
+		if left.type == tokens.boolean and right.type == tokens.boolean then
+			result = tokens.Token(tokens.boolean, left.value or right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '||=' (expected booleans): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "^=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ~ right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ~ right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '^=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "<<=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value << right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value << right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '<<=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == ">>=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value >> right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value >> right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '>>=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "**=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ^ right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ^ right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '**=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "//=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value ^ (1 / right.value))
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 		else
 			print("ERROR: Unexpected argument types for operator '//=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "*=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value * right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value * right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '*=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "/=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value / right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value / right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '/=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "%=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value % right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value % right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '%=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "+=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value + right.value)
-		elseif left.type == tokens.String and right.type == tokens.String then
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value + right.value)
+		elseif left.type == tokens.string and right.type == tokens.string then
 			result = tokens.Token(
-				tokens.String,
+				tokens.string,
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
@@ -534,8 +573,8 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 			os.exit()
 		end
 	elseif operator == "-=" then
-		if left.type == tokens.Number and right.type == tokens.Number then
-			result = tokens.Token(tokens.Number, left.value - right.value)
+		if left.type == tokens.number and right.type == tokens.number then
+			result = tokens.Token(tokens.number, left.value - right.value)
 		else
 			print("ERROR: Unexpected argument types for operator '-=' (expected numbers): " .. left.type .. ", " .. right.type)
 			os.exit()
@@ -547,7 +586,7 @@ end
 
 
 function interpreter.evaluateVariableDeclaration(statement, scope)
-	local value = interpreter.evaluate(statement.value, scope) or tokens.Token(tokens.Null, "null")
+	local value = interpreter.evaluate(statement.value, scope) or tokens.Token(tokens.null, "null")
 	return scopes.declareVariable(statement.name, value, statement.constant, scope)
 end
 
@@ -562,7 +601,7 @@ function interpreter.evaluate(astNode, scope)
 	elseif astNode.type == ast.FunctionCall then
 		return interpreter.evaluateFunctionCall(astNode.value, scope)
 	elseif astNode.type == ast.FunctionDefinition then
-		return interpreter.evaluateFunctionDefinition(astNode.value, scope)
+		return scopes.declareVariable(astNode.value.name, tokens.Token(tokens.userFunction, astNode.value), true, scope)
 	elseif astNode.type == ast.Loop then
 		return interpreter.evaluateLoop(astNode, scope)
 	elseif astNode.type == ast.Identifier then
@@ -571,10 +610,12 @@ function interpreter.evaluate(astNode, scope)
 		return interpreter.evaluateIfStatement(astNode, scope)
 	elseif astNode.type == ast.IndexExpression then
 		return interpreter.evaluateIndexExpression(astNode.value, scope)
+	elseif astNode.type == ast.MemberExpression then
+		return interpreter.evaluateMemberExpression(astNode.value, scope)
 	elseif astNode.type == ast.Number then
-		return tokens.Token(tokens.Number, astNode.value)
+		return tokens.Token(tokens.number, astNode.value)
 	elseif astNode.type == ast.String then
-		return tokens.Token(tokens.String, astNode.value)
+		return tokens.Token(tokens.string, astNode.value)
 	elseif astNode.type == ast.Program then
 		return interpreter.evaluateProgram(astNode, scope)
 	elseif astNode.type == ast.UnaryExpression then
@@ -583,8 +624,6 @@ function interpreter.evaluate(astNode, scope)
 		return interpreter.evaluateVariableAssignment(astNode.value, scope)
 	elseif astNode.type == ast.VariableDeclaration then
 		return interpreter.evaluateVariableDeclaration(astNode.value, scope)
-	elseif astNode.type ~= ast.Break and astNode.type ~= ast.Continue and astNode.type ~= ast.Return then
-		return tokens.Token(tokens.Null, "not yet implemented")
 	else
 		return astNode
 	end

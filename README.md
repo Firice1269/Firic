@@ -299,6 +299,10 @@ func multiply(a, b) {
 
 All functions built into Firic are defined in Lua. The following is the full list of them, each with a description of what they do:
 
+`copy(v: array | dict)` returns a copy of `v`.
+
+The `copy` function takes in one argument (which must be an array or a dictionary) and returns a copy of it.
+
 The `len` function takes in one argument (which must be an array or a string) and returns its length.
 
 The `print` function takes in a variable number of arguments and prints all of them, separated by newlines.
@@ -306,6 +310,39 @@ The `print` function takes in a variable number of arguments and prints all of t
 The `randint` function takes in two arguments (which must both be numbers) and returns a random integer between those two arguments (inclusive).
 
 The `type` function takes in one argument and returns its type as a string.
+
+The `array.contains` function takes in one argument and returns `true` if the array contains the argument (or `false` if it doesn't contain the argument).
+
+The `array.count` function takes in one argument and returns a number equal to the number of occurrences of that element in the array.  
+(This function is equivalent to `len(array.find(v))`, where `v` is the argument of this function.)
+
+The `array.find` function takes in one argument and returns an array containing every index at which that element occurs in the array.
+
+The `array.insert` function takes in two arguments (the second of which must be a number), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
+
+The `array.pop` function takes in no arguments, removes the last element of the array, and returns the resulting array.  
+(This function is equivalent to `array.remove(len(Array))`.)
+
+The `array.push` function takes in one argument, inserts it into the array at the end, and returns the resulting array.  
+(This function is equivalent to `array.insert(v, len(Array))`, where `v` is the argument of this function.)
+
+The `array.remove` function takes in one argument (which must be a number), removes the element at the index equal to it from the array, and returns the resulting array.
+
+The `array.reverse` function takes in no arguments, reverses the order of the elements in the array, and returns the resulting array.
+
+The `array.sort` function takes in no arguments, sorts the array (in ascending order), and returns the resulting array.
+
+The `dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` if it doesn't contain the argument).
+
+The `dictionary.find` function takes in one argument and returns an array containing every key at which that value occurs in the dictionary.
+
+The `dictionary.insert` function takes in two arguments, inserts the first argument into the dictionary with a key equal to the second argument, and returns the resulting dictionary.
+
+The `dictionary.keys` function takes in no arguments and returns an array containing all of the keys of the dictionary.
+
+The `dictionary.remove` function takes in one argument, removes the value at the key equal to it from the dictionary, and returns the resulting dictionary.
+
+The `dictionary.values` function takes in no arguments and returns an array containing all of the values of the dictionary.
 
 ## Using Firic
 

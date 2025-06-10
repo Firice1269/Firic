@@ -3,19 +3,15 @@
 	"publisher": "",
   "name": "firic",
   "displayName": "Firic",
-  "description": "Syntax highlighting for Firic",
+  "description": "Language support for Firic",
   "version": "0.1.0",
-  "engines": {
-    "vscode": "^1.100.0"
-  },
-  "categories": [
-    "Programming Languages"
-  ],
+  "engines": {"vscode": "^1.100.0"},
+  "categories": ["Programming Languages"],
   "contributes": {
     "languages": [
 			{
 				"id": "firic",
-				"aliases": ["Firic", "firic"],
+				"aliases": ["Firic"],
 				"extensions": [".fi"],
 				"configuration": "./language-configuration.json"
     	}
@@ -25,6 +21,12 @@
 				"language": "firic",
 				"scopeName": "source.fi",
 				"path": "./syntaxes/firic.json"
+			}
+		],
+		"snippets": [
+			{
+				"language": "firic",
+				"path": "./snippets.json"
 			}
 		]
   }
