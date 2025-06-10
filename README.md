@@ -299,8 +299,6 @@ func multiply(a, b) {
 
 All functions built into Firic are defined in Lua. The following is the full list of them, each with a description of what they do:
 
-`copy(v: array | dict)` returns a copy of `v`.
-
 The `copy` function takes in one argument (which must be an array or a dictionary) and returns a copy of it.
 
 The `len` function takes in one argument (which must be an array or a string) and returns its length.
