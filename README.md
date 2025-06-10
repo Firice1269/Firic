@@ -311,18 +311,15 @@ The `type` function takes in one argument and returns its type as a string.
 
 The `array.contains` function takes in one argument and returns `true` if the array contains the argument (or `false` if it doesn't contain the argument).
 
-The `array.count` function takes in one argument and returns a number equal to the number of occurrences of that element in the array.  
-(This function is equivalent to `len(array.find(v))`, where `v` is the argument of this function.)
-
 The `array.find` function takes in one argument and returns an array containing every index at which that element occurs in the array.
 
 The `array.insert` function takes in two arguments (the second of which must be a number), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
 
 The `array.pop` function takes in no arguments, removes the last element of the array, and returns the resulting array.  
-(This function is equivalent to `array.remove(len(Array))`.)
+(This function is equivalent to `array.remove(len(array))`.)
 
 The `array.push` function takes in one argument, inserts it into the array at the end, and returns the resulting array.  
-(This function is equivalent to `array.insert(v, len(Array))`, where `v` is the argument of this function.)
+(This function is equivalent to `array.insert(v, len(array))`, where `v` is the argument of this function.)
 
 The `array.remove` function takes in one argument (which must be a number), removes the element at the index equal to it from the array, and returns the resulting array.
 
