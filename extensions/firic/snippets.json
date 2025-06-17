@@ -15,6 +15,14 @@
 			"}"
 		]
 	},
+	"for loop": {
+		"prefix": ["for"],
+		"body": [
+			"for $1 in $2 {",
+			"\t$0",
+			"}"
+		]
+	},
 	"function": {
 		"prefix": ["func"],
 		"body": [
@@ -31,10 +39,10 @@
 			"}"
 		]
 	},
-	"loop": {
-		"prefix": ["loop"],
+	"while loop": {
+		"prefix": ["while"],
 		"body": [
-			"loop {",
+			"while $1 {",
 			"\t$0",
 			"}"
 		]

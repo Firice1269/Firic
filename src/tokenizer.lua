@@ -13,13 +13,15 @@ function tokenizer.tokenize(sourceCode)
 		["else"]     = {},
 		["elseif"]   = {},
 		["export"]   = {},
+		["for"]      = {},
 		["func"]     = {},
 		["if"]       = {},
+		["in"]       = {},
 		["import"]   = {},
 		["let"]      = {},
-		["loop"]     = {},
 		["return"]   = {},
 		["var"]      = {},
+		["while"]    = {},
 	}
 
 	local OPERATORS = {

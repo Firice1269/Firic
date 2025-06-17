@@ -5,29 +5,29 @@ ast.NodeType = {
 	PROGRAM = "Program",
 
 	EXPRESSION = {
-		BINARY     = "BinaryExpression",
-		CALL       = "FunctionCall",
-		INDEX      = "IndexExpression",
-		MEMBER     = "MemberExpression",
-		UNARY      = "UnaryExpression",
+		BINARY = "BinaryExpression",
+		CALL   = "FunctionCall",
+		INDEX  = "IndexExpression",
+		MEMBER = "MemberExpression",
+		UNARY  = "UnaryExpression",
 	},
 
 	LITERAL = {
 		ARRAY      = "Array",
 		DICTIONARY = "Dictionary",
+		FUNCTION   = "Function",
 		IDENTIFIER = "Identifier",
 		NUMBER     = "Number",
 		STRING     = "String",
 	},
 
 	STATEMENT = {
-		BREAK      = "Break",
-		CONTINUE   = "Continue",
-		FUNCTION   = "FunctionDefinition",
-		LOOP       = "Loop",
-		IF         = "IfStatement",
-		IMPORT     = "Import",
-		RETURN     = "Return",
+		BREAK    = "Break",
+		CONTINUE = "Continue",
+		LOOP     = "Loop",
+		IF       = "IfStatement",
+		IMPORT   = "Import",
+		RETURN   = "Return",
 
 		VARIABLE = {
 			ASSIGNMENT  = "VariableAssignment",
@@ -47,13 +47,13 @@ ast.UnaryExpression  = ast.NodeType.EXPRESSION.UNARY
 
 ast.Array      = ast.NodeType.LITERAL.ARRAY
 ast.Dictionary = ast.NodeType.LITERAL.DICTIONARY
+ast.Function   = ast.NodeType.LITERAL.FUNCTION
 ast.Identifier = ast.NodeType.LITERAL.IDENTIFIER
 ast.Number     = ast.NodeType.LITERAL.NUMBER
 ast.String     = ast.NodeType.LITERAL.STRING
 
 ast.Break               = ast.NodeType.STATEMENT.BREAK
 ast.Continue            = ast.NodeType.STATEMENT.CONTINUE
-ast.FunctionDefinition  = ast.NodeType.STATEMENT.FUNCTION
 ast.Loop                = ast.NodeType.STATEMENT.LOOP
 ast.IfStatement         = ast.NodeType.STATEMENT.IF
 ast.Import              = ast.NodeType.STATEMENT.IMPORT

@@ -143,13 +143,27 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	elseif operator == "+" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value + right.value)
-		elseif left.type == tokens.string and right.type == tokens.string then
+		elseif left.type == tokens.string or right.type == tokens.string then
+			if left.type == tokens.number then
+				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"")
+			elseif left.type ~= tokens.string then
+				print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				os.exit()
+			end
+
+			if right.type == tokens.number then
+				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
+			elseif right.type ~= tokens.string then
+				print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				os.exit()
+			end
+
 			result = tokens.Token(
 				tokens.string,
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			print("ERROR: Unexpected argument types for operator '+' (expected number or string): " .. left.type .. ", " .. right.type)
+			print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
 			os.exit()
 		end
 	elseif operator == "-" then
@@ -194,6 +208,17 @@ function interpreter.evaluateDictionary(dictionary, scope)
 end
 
 
+function interpreter.evaluateFunction(expression, scope)
+	local func = tokens.Token(tokens.userFunction, expression)
+
+	if expression.name == nil then
+		return func
+	else
+		return scopes.declareVariable(expression.name, func, true, scope)
+	end
+end
+
+
 function interpreter.evaluateFunctionCall(expression, scope)
 	local arguments = {}
 
@@ -201,7 +226,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		tablex.push(arguments, interpreter.evaluate(v, scope))
 	end
 
-	local func = interpreter.evaluate(expression.callee, scope)
+	local func = interpreter.evaluate(expression.call, scope)
 
 	if func.type == tokens.nativeFunction then
 		return func.value(arguments) or tokens.Token(tokens.null, "null")
@@ -231,33 +256,68 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		return value
 	end
 
-	print("ERROR: Unexpected type of callee (expected function): " .. tablex.repr(func))
+	print("ERROR: Unexpected type of call (expected function): " .. tablex.repr(func))
 	os.exit()
 end
 
 
 function interpreter.evaluateLoop(statement, scope)
 	local parent = scope
-	scope        = scopes.Scope(parent)
 
 	local value
-	local broken
 
-	while not broken do
-		broken = false
+	if statement.keyword == "for" then
+		local array = interpreter.evaluate(statement.expression.value.right, parent)
 
-		for _, v in ipairs(statement.value) do
-			v = interpreter.evaluate(v, scope)
+		if array.type ~= tokens.array then
+			print("ERROR: Unexpected type of for loop iterator (expected array): " .. array.type)
+			os.exit()
+		end
 
-			if v ~= nil then
-				if v.type == ast.Break then
-					broken = true
-					break
-				elseif v.type == ast.Continue then
-					break
+		local broken = false
+
+		for _, v in ipairs(array.value) do
+			if broken then
+				break
+			end
+
+			scope = scopes.Scope(parent)
+			scopes.declareVariable(statement.expression.value.left.value, v, false, scope)
+
+			for _, w in ipairs(statement.body) do
+				w = interpreter.evaluate(w, scope)
+
+				if w ~= nil then
+					if w.type == ast.Break then
+						broken = true
+						break
+					elseif w.type == ast.Continue then
+						break
+					end
+
+					value = w
 				end
+			end
+		end
+	elseif statement.keyword == "while" then
+		local broken = false
 
-				value = v
+		while interpreter.evaluate(statement.expression, parent).value and not broken do
+			scope = scopes.Scope(parent)
+
+			for _, v in ipairs(statement.body) do
+				v = interpreter.evaluate(v, scope)
+
+				if v ~= nil then
+					if v.type == ast.Break then
+						broken = true
+						break
+					elseif v.type == ast.Continue then
+						break
+					end
+
+					value = v
+				end
 			end
 		end
 	end
@@ -270,14 +330,12 @@ function interpreter.evaluateMemberExpression(expression, scope)
 	local left   = expression.left
 	local object = interpreter.evaluate(left, scope)
 
-	if left.type == ast.Identifier then
-		left.type = tokens.identifier
-	elseif left.type == ast.MemberExpression then
+	if left.type == ast.MemberExpression then
 		while left.type == ast.MemberExpression do
 			left = left.value.left
 		end
-	else
-		left = object
+	elseif left.type ~= ast.Identifier then
+		left = interpreter.evaluate(left, scope)
 	end
 
 	local member = expression.right
@@ -296,13 +354,32 @@ function interpreter.evaluateMemberExpression(expression, scope)
 		)
 	end
 
-	if member.type == ast.FunctionCall then
-		table.insert(member.value.arguments, 1, scope)
-		table.insert(member.value.arguments, 1, object)
-		table.insert(member.value.arguments, 1, left)
+	if member.type == ast.IndexExpression then
+		if member.value.left.type == ast.FunctionCall then
+			table.insert(member.value.left.value.arguments, 1, object)
+			left = interpreter.evaluate(member.value.left, scope)
+			table.remove(member.value.left.value.arguments, 1)
+
+			return interpreter.evaluate(
+				ast.Node(
+					ast.IndexExpression,
+					{
+						left  = left,
+						right = member.value.right,
+					}
+				),
+				scope
+			)
+		end
 	end
 
-	return interpreter.evaluate(member, scope)
+	if member.type == ast.FunctionCall then
+		table.insert(member.value.arguments, 1, object)
+		left = interpreter.evaluate(member, scope)
+		table.remove(member.value.arguments, 1)
+
+		return left
+	end
 end
 
 
@@ -367,46 +444,46 @@ end
 
 
 function interpreter.evaluateIndexExpression(expression, scope)
-	local identifier = expression.identifier
+	local left = expression.left
 
-	if type(identifier) == "string" then
-		identifier = interpreter.evaluateIdentifier(
-			ast.Node(ast.Identifier, identifier),
+	if left.type == tokens.identifier then
+		left = interpreter.evaluateIdentifier(
+			ast.Node(ast.Identifier, left.value),
 			scope
 		)
 	else
-		identifier = interpreter.evaluate(identifier, scope)
+		left = interpreter.evaluate(left, scope)
 	end
 
-	local index = interpreter.evaluate(expression.index, scope)
+	local index = interpreter.evaluate(expression.right, scope)
 
-	if identifier.type == tokens.array then
+	if left.type == tokens.array then
 		if index.type ~= tokens.number then
 			print("ERROR: Unexpected index type inside index expression (expected number): " .. index.type)
 			os.exit()
 		end
 
 		if index.value < 0 then
-			index.value = index.value + #identifier.value
+			index.value = index.value + #left.value
 		end
 
-		local value = identifier.value[index.value + 1]
+		local value = left.value[index.value + 1]
 
 		if value == nil then
 			return tokens.Token(tokens.null, "null")
 		end
 
 		return value
-	elseif identifier.type == tokens.dictionary then
-		for _, v in ipairs(identifier.value) do
+	elseif left.type == tokens.dictionary then
+		for _, v in ipairs(left.value) do
 			if index.value == v.key.value then
 				return v.value
 			end
 		end
 
 		return tokens.Token(tokens.null, "null")
-	elseif identifier.type == tokens.string then
-		local value = string.sub(string.sub(identifier.value, 2, #identifier.value - 1), index.value + 1, index.value + 1)
+	elseif left.type == tokens.string then
+		local value = string.sub(string.sub(left.value, 2, #left.value - 1), index.value + 1, index.value + 1)
 
 		if value == "" then
 			return tokens.Token(tokens.null, "null")
@@ -563,7 +640,21 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 	elseif operator == "+=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value + right.value)
-		elseif left.type == tokens.string and right.type == tokens.string then
+		elseif left.type == tokens.string or right.type == tokens.string then
+			if left.type == tokens.number then
+				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"")
+			elseif left.type ~= tokens.string then
+				print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				os.exit()
+			end
+
+			if right.type == tokens.number then
+				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
+			elseif right.type ~= tokens.string then
+				print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				os.exit()
+			end
+
 			result = tokens.Token(
 				tokens.string,
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
@@ -598,12 +689,12 @@ function interpreter.evaluate(astNode, scope)
 		return interpreter.evaluateBinaryExpression(astNode.value, scope)
 	elseif astNode.type == ast.Dictionary then
 		return interpreter.evaluateDictionary(astNode.value, scope)
+	elseif astNode.type == ast.Function then
+		return interpreter.evaluateFunction(astNode.value, scope)
 	elseif astNode.type == ast.FunctionCall then
 		return interpreter.evaluateFunctionCall(astNode.value, scope)
-	elseif astNode.type == ast.FunctionDefinition then
-		return scopes.declareVariable(astNode.value.name, tokens.Token(tokens.userFunction, astNode.value), true, scope)
 	elseif astNode.type == ast.Loop then
-		return interpreter.evaluateLoop(astNode, scope)
+		return interpreter.evaluateLoop(astNode.value, scope)
 	elseif astNode.type == ast.Identifier then
 		return interpreter.evaluateIdentifier(astNode, scope)
 	elseif astNode.type == ast.IfStatement then

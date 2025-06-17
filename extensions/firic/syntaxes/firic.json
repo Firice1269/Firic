@@ -44,7 +44,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.firic",
-					"match": "\\b(break|continue|else|elseif|export|if|import|loop|return)\\b"
+					"match": "\\b(break|continue|else|elseif|export|for|if|in|import|return|while)\\b"
 				},
 				{
 					"name": "keyword.other.firic",

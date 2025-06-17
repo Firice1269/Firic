@@ -132,7 +132,7 @@ Firic supports the following operators:
 
 `%`: modulus
 
-`+`: addition
+`+`: addition/concatenation
 
 `-`: subtraction
 
@@ -176,7 +176,7 @@ Firic supports the following operators:
 
 `%=`: modulus assignment
 
-`+=`: addition assignment
+`+=`: addition/concatenation assignment
 
 `-=`: subtraction assignment
 
@@ -214,11 +214,11 @@ Example:
 let n = 81
 
 if n == 80 {
-  print("n is 80")
+	print("n is 80")
 } elseif n == 81 {
-  print("n is 81")
+	print("n is 81")
 } else {
-  print("n is not 80 or 81, n is " + n)
+	print("n is not 80 or 81, n is " + n)
 }
 ```
 Output:
@@ -228,42 +228,56 @@ n is 81
 
 ### Loops
 
-Unlike most programming languages, Firic has only one kind of loop (one that runs forever). Loops in Firic are created using the `loop` keyword, with the body (enclosed in braces) immediately following.
+Firic supports for and while loops.
 
 Inside loops, the `break` and `continue` keywords can be used to immediately exit the loop, or enter the next iteration of the loop, respectively.
 
+#### For Loops
+
+For loops must begin with the `for` keyword, followed by a variable name, then the `in` keyword and an iterator (which must be an array), and finally, the body of the loop (enclosed in braces). The for loop first declares an iterator variable using the variable name after the `for` keyword, setting it equal to the first element in the iterator array, then the second, and so on, until it has looped through every element in the array.
+
 Example:
-```lua
---prints every number 1-10
-```
-
 ```swift
-var x = 1
+let fibonacci = [
+	0,
+	1,
+	1,
+	2,
+	3,
+	5,
+	8,
+	13,
+	21,
+	34,
+	55,
+	89,
+	144,
+]
 
-loop {
-  print(x)
-  x += 1
-
-  if x > 10 { break; }
+for number in fibonacci {
+	print("F(" + fibonacci.find(number)[0] + ") = " + number)
 }
 ```
-
-```lua
---prints every even number 1-10
+Output:
+```
+F(0) = 0
+F(1) = 1
+F(1) = 1
+F(3) = 2
+F(4) = 3
+F(5) = 5
+F(6) = 8
+F(7) = 13
+F(8) = 21
+F(9) = 34
+F(10) = 55
+F(11) = 89
+F(12) = 144
 ```
 
-```swift
-var x = 1
+#### While Loops
 
-loop {
-  if x % 2 == 1 { continue; }
 
-  print(x)
-  x += 1
-
-  if x > 10 { break; }
-}
-```
 
 ### Functions
 
@@ -276,22 +290,18 @@ foo(bar, baz)
 
 #### User-Defined Functions
 
-Functions can be defined by a user with the `func` keyword, followed by the function's name, then its parameters (enclosed in parentheses), and then its body (enclosed in braces).
+Functions can be defined by a user with the `func` keyword, followed by the function's name, then its parameters (enclosed in parentheses), and then its body (enclosed in braces). Alternatively, anonymous functions (unnamed function literals) can be created in the exact same way, except for the name of the function being omitted. Additionally, anonymous functions can be assigned to a variable, which can then be reassigned if the function is no longer needed.
 
 Example:
 ```swift
 func multiply(a, b) {
-  var result = 0
+	var result = 0
 
-  loop {
-    a -= 1
+	for _ in range(a) {
+		result += b
+	}
 
-    result += b
-
-    if a == 0 { break; }
-  }
-
-  return result
+	return result
 }
 ```
 
@@ -305,7 +315,9 @@ The `len` function takes in one argument (which must be an array or a string) an
 
 The `print` function takes in a variable number of arguments and prints all of them, separated by newlines.
 
-The `randint` function takes in two arguments (which must both be numbers) and returns a random integer between those two arguments (inclusive).
+The `randint` function takes in two arguments (which must both be numbers), the first of which is optional (defaults to `1`), and returns a random integer between those two arguments (inclusive).
+
+The `range` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns an array containing every integer between the first and second arguments (inclusive), skipping over any integer that, when subtracted by the first argument, is not divisible by the third argument.
 
 The `type` function takes in one argument and returns its type as a string.
 
@@ -315,17 +327,13 @@ The `array.find` function takes in one argument and returns an array containing 
 
 The `array.insert` function takes in two arguments (the second of which must be a number), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
 
-The `array.pop` function takes in no arguments, removes the last element of the array, and returns the resulting array.  
-(This function is equivalent to `array.remove(len(array))`.)
-
-The `array.push` function takes in one argument, inserts it into the array at the end, and returns the resulting array.  
-(This function is equivalent to `array.insert(v, len(array))`, where `v` is the argument of this function.)
+The `array.randelement` function takes in no arguments and returns a random element from the array.
 
 The `array.remove` function takes in one argument (which must be a number), removes the element at the index equal to it from the array, and returns the resulting array.
 
 The `array.reverse` function takes in no arguments, reverses the order of the elements in the array, and returns the resulting array.
 
-The `array.sort` function takes in no arguments, sorts the array (in ascending order), and returns the resulting array.
+The `array.sort` function takes in one argument (which must be a boolean), which is optional (defaults to `false`), sorts the array in ascending order (unless the argument is `true`, in which case the array would be sorted in descending order), and returns the resulting array.
 
 The `dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` if it doesn't contain the argument).
 
