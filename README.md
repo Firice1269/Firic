@@ -204,20 +204,24 @@ false
 
 ### Variables
 
-Firic uses two different keywords for declaring variables: `let` and `var`. Variables declared with the `let` keyword are immutable, while those declared with the `var` keyword are mutable.
+Firic uses two different keywords for declaring variables: `let` and `var`. Variables declared with the `let` keyword are immutable, while those declared with the `var` keyword are mutable. If a variable assignment is done on an immutable variable, Firic will throw an error.
 
 Example:
 ```swift
-let x = 24 --immutable
-x     = 0  --error
+var x = 24
+x     = 1 
 
-var y = 25 --mutable
-y     = 0  --no error
+let y = -24
+y     = -1
+```
+Output:
+```
+error while evaluating variable assignment at line 5: 'y' is constant
 ```
 
 ### If Statements
 
-In Firic, if statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise you will get an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
+In Firic, if statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise Firic will throw an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
 
 Example:
 ```swift

@@ -18,9 +18,9 @@ end
 
 
 function interpreter.evaluateBinaryExpression(expression, scope)
-	local left     = interpreter.evaluate(expression.left, scope)
-	local operator = expression.operator
-	local right    = interpreter.evaluate(expression.right, scope)
+	local left     = interpreter.evaluate(expression.value.left, scope)
+	local operator = expression.value.operator
+	local right    = interpreter.evaluate(expression.value.right, scope)
 
 	local result
 
@@ -343,7 +343,7 @@ function interpreter.evaluateDictionary(dictionary, scope)
 	local keys   = {}
 	local values = {}
 
-	for _, v in ipairs(dictionary) do
+	for _, v in ipairs(dictionary.value) do
 		tablex.push(
 			values,
 			{
@@ -369,12 +369,12 @@ end
 
 
 function interpreter.evaluateFunction(expression, scope)
-	local func = tokens.Token(tokens.userFunction, expression)
+	local func = tokens.Token(tokens.userFunction, expression.value)
 
-	if expression.name == nil then
+	if expression.value.name == nil then
 		return func
 	else
-		return scopes.declareVariable(expression.name, func, true, scope, expression.start)
+		return scopes.declareVariable(expression.value.name, func, true, scope, expression.start)
 	end
 end
 
@@ -382,11 +382,11 @@ end
 function interpreter.evaluateFunctionCall(expression, scope)
 	local arguments = {}
 
-	for _, v in ipairs(expression.arguments) do
+	for _, v in ipairs(expression.value.arguments) do
 		tablex.push(arguments, interpreter.evaluate(v, scope))
 	end
 
-	local func = interpreter.evaluate(expression.call, scope)
+	local func = interpreter.evaluate(expression.value.call, scope)
 
 	if func.type == tokens.nativeFunction then
 		return func.value(arguments, expression.start) or tokens.Token(tokens.null, "null")
@@ -432,8 +432,8 @@ function interpreter.evaluateLoop(statement, scope)
 
 	local value
 
-	if statement.keyword == "for" then
-		local array = interpreter.evaluate(statement.expression.value.right, parent)
+	if statement.value.keyword == "for" then
+		local array = interpreter.evaluate(statement.value.expression.value.right, parent)
 
 		if array.type ~= tokens.array then
 			print(
@@ -454,9 +454,9 @@ function interpreter.evaluateLoop(statement, scope)
 			end
 
 			scope = scopes.Scope(parent)
-			scopes.declareVariable(statement.expression.value.left.value, v, false, scope, statement.start)
+			scopes.declareVariable(statement.value.expression.value.left.value, v, false, scope, statement.start)
 
-			for _, w in ipairs(statement.body) do
+			for _, w in ipairs(statement.value.body) do
 				w = interpreter.evaluate(w, scope)
 
 				if w ~= nil then
@@ -471,13 +471,13 @@ function interpreter.evaluateLoop(statement, scope)
 				end
 			end
 		end
-	elseif statement.keyword == "while" then
+	elseif statement.value.keyword == "while" then
 		local broken = false
 
-		while interpreter.evaluate(statement.expression, parent).value and not broken do
+		while interpreter.evaluate(statement.value.expression, parent).value and not broken do
 			scope = scopes.Scope(parent)
 
-			for _, v in ipairs(statement.body) do
+			for _, v in ipairs(statement.value.body) do
 				v = interpreter.evaluate(v, scope)
 
 				if v ~= nil then
@@ -499,7 +499,7 @@ end
 
 
 function interpreter.evaluateMemberExpression(expression, scope)
-	local left   = expression.left
+	local left   = expression.value.left
 	local object = interpreter.evaluate(left, scope)
 
 	if left.type == ast.MemberExpression then
@@ -510,7 +510,7 @@ function interpreter.evaluateMemberExpression(expression, scope)
 		left = interpreter.evaluate(left, scope)
 	end
 
-	local member = expression.right
+	local member = expression.value.right
 
 	if object.type == tokens.array then
 		scope = scopes.Scope(
@@ -534,6 +534,7 @@ function interpreter.evaluateMemberExpression(expression, scope)
 
 			return interpreter.evaluate(
 				ast.Node(
+					member.start,
 					ast.IndexExpression,
 					{
 						left  = left,
@@ -628,18 +629,18 @@ end
 
 
 function interpreter.evaluateIndexExpression(expression, scope)
-	local left = expression.left
+	local left = expression.value.left
 
 	if left.type == tokens.identifier then
 		left = interpreter.evaluateIdentifier(
-			ast.Node(ast.Identifier, left.value),
+			ast.Node(left.start, ast.Identifier, left.value),
 			scope
 		)
 	else
 		left = interpreter.evaluate(left, scope)
 	end
 
-	local index = interpreter.evaluate(expression.right, scope)
+	local index = interpreter.evaluate(expression.value.right, scope)
 
 	if left.type == tokens.array then
 		if index.type ~= tokens.number then
@@ -696,7 +697,7 @@ end
 
 
 function interpreter.evaluateTernaryExpression(expression, scope)
-	local condition = interpreter.evaluate(expression.condition, scope)
+	local condition = interpreter.evaluate(expression.value.condition, scope)
 
 	if condition.type ~= tokens.boolean then
 		print(
@@ -710,16 +711,16 @@ function interpreter.evaluateTernaryExpression(expression, scope)
 	end
 
 	if condition.value then
-		return interpreter.evaluate(expression.left, scope)
+		return interpreter.evaluate(expression.value.left, scope)
 	else
-		return interpreter.evaluate(expression.right, scope)
+		return interpreter.evaluate(expression.value.right, scope)
 	end
 end
 
 
 function interpreter.evaluateUnaryExpression(expression, scope)
-	local operator = expression.operator
-	local value    = interpreter.evaluate(expression.value, scope)
+	local operator = expression.value.operator
+	local value    = interpreter.evaluate(expression.value.value, scope)
 
 	local result
 
@@ -772,7 +773,7 @@ end
 
 
 function interpreter.evaluateVariableAssignment(statement, scope)
-	local name = statement.left
+	local name = statement.value.left
 
 	if name.type ~= ast.Identifier then
 		print(
@@ -785,10 +786,10 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 		os.exit()
 	end
 
-	local left = interpreter.evaluate(statement.left, scope)
+	local left = interpreter.evaluate(statement.value.left, scope)
 
-	local operator = statement.operator
-	local right    = interpreter.evaluate(statement.right, scope)
+	local operator = statement.value.operator
+	local right    = interpreter.evaluate(statement.value.right, scope)
 
 	local result = right
 
@@ -1044,8 +1045,8 @@ end
 
 
 function interpreter.evaluateVariableDeclaration(statement, scope)
-	local value = interpreter.evaluate(statement.value, scope) or tokens.Token(tokens.null, "null")
-	return scopes.declareVariable(statement.name, value, statement.constant, scope, statement.start)
+	local value = interpreter.evaluate(statement.value.value, scope) or tokens.Token(tokens.null, "null")
+	return scopes.declareVariable(statement.value.name, value, statement.value.constant, scope, statement.value.start)
 end
 
 
@@ -1053,23 +1054,23 @@ function interpreter.evaluate(astNode, scope)
 	if astNode.type == ast.Array then
 		return interpreter.evaluateArray(astNode, scope)
 	elseif astNode.type == ast.BinaryExpression then
-		return interpreter.evaluateBinaryExpression(astNode.value, scope)
+		return interpreter.evaluateBinaryExpression(astNode, scope)
 	elseif astNode.type == ast.Dictionary then
-		return interpreter.evaluateDictionary(astNode.value, scope)
+		return interpreter.evaluateDictionary(astNode, scope)
 	elseif astNode.type == ast.Function then
-		return interpreter.evaluateFunction(astNode.value, scope)
+		return interpreter.evaluateFunction(astNode, scope)
 	elseif astNode.type == ast.FunctionCall then
-		return interpreter.evaluateFunctionCall(astNode.value, scope)
+		return interpreter.evaluateFunctionCall(astNode, scope)
 	elseif astNode.type == ast.Loop then
-		return interpreter.evaluateLoop(astNode.value, scope)
+		return interpreter.evaluateLoop(astNode, scope)
 	elseif astNode.type == ast.Identifier then
 		return interpreter.evaluateIdentifier(astNode, scope)
 	elseif astNode.type == ast.IfStatement then
 		return interpreter.evaluateIfStatement(astNode, scope)
 	elseif astNode.type == ast.IndexExpression then
-		return interpreter.evaluateIndexExpression(astNode.value, scope)
+		return interpreter.evaluateIndexExpression(astNode, scope)
 	elseif astNode.type == ast.MemberExpression then
-		return interpreter.evaluateMemberExpression(astNode.value, scope)
+		return interpreter.evaluateMemberExpression(astNode, scope)
 	elseif astNode.type == ast.Number then
 		return tokens.Token(tokens.number, astNode.value)
 	elseif astNode.type == ast.String then
@@ -1077,13 +1078,13 @@ function interpreter.evaluate(astNode, scope)
 	elseif astNode.type == ast.Program then
 		return interpreter.evaluateProgram(astNode, scope)
 	elseif astNode.type == ast.TernaryExpression then
-		return interpreter.evaluateTernaryExpression(astNode.value, scope)
+		return interpreter.evaluateTernaryExpression(astNode, scope)
 	elseif astNode.type == ast.UnaryExpression then
-		return interpreter.evaluateUnaryExpression(astNode.value, scope)
+		return interpreter.evaluateUnaryExpression(astNode, scope)
 	elseif astNode.type == ast.VariableAssignment then
-		return interpreter.evaluateVariableAssignment(astNode.value, scope)
+		return interpreter.evaluateVariableAssignment(astNode, scope)
 	elseif astNode.type == ast.VariableDeclaration then
-		return interpreter.evaluateVariableDeclaration(astNode.value, scope)
+		return interpreter.evaluateVariableDeclaration(astNode, scope)
 	else
 		return astNode
 	end
