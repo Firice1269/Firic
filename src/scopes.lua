@@ -18,32 +18,34 @@ function scopes.Scope(parent, constants, variables)
 end
 
 
-function scopes.findVariable(name, scope)
+function scopes.findVariable(name, scope, line)
 	if scope.variables[name] ~= nil then
 		return scope
 	end
 
 	if scope.parent == nil then
-		print("ERROR: Cannot find '" .. name .. "' in scope")
+		print("error on line " .. line .. ": cannot find '" .. name .. "' in scope")
 		os.exit()
 	end
 
-	return scopes.findVariable(name, scope.parent)
+	return scopes.findVariable(name, scope.parent, line)
 end
 
 
-function scopes.declareVariable(name, value, constant, scope)
-	local parent = scope.parent
+function scopes.declareVariable(name, value, constant, scope, line)
+	local parent = scope
+
+	while parent.variables[name] == nil do
+		parent = parent.parent
+
+		if parent == nil then
+			break
+		end
+	end
 
 	if parent ~= nil then
-		while parent.variables[name] ~= nil do
-			parent = parent.parent
-
-			if parent == nil then
-				print("ERROR: " .. name .. " is already defined")
-				os.exit()
-			end
-		end
+		print("error on line " .. line .. ": '" .. name .. "' is already defined")
+		os.exit()
 	end
 
 	scope.variables[name] = value
@@ -56,11 +58,11 @@ function scopes.declareVariable(name, value, constant, scope)
 end
 
 
-function scopes.assignVariable(name, value, scope)
-	scope = scopes.findVariable(name, scope)
+function scopes.assignVariable(name, value, scope, line)
+	scope = scopes.findVariable(name, scope, line)
 
 	if scope.constants[name] ~= nil then
-		print("ERROR: " .. name .. " is a constant")
+		print("error while evaluating variable assignment at line " .. line .. ": '" .. name .. "' is constant")
 		os.exit()
 	end
 
@@ -69,8 +71,8 @@ function scopes.assignVariable(name, value, scope)
 end
 
 
-function scopes.lookupVariable(name, scope)
-	scope = scopes.findVariable(name, scope)
+function scopes.lookupVariable(name, scope, line)
+	scope = scopes.findVariable(name, scope, line)
 	return scope.variables[name]
 end
 
@@ -166,14 +168,26 @@ scopes.globalScope = scopes.Scope(
 	},
 	{
 		--FUNCTIONS
-		copy = tokens.Token(tokens.nativeFunction, function (arguments)
+		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'copy' (expected 1): " .. #arguments)
+				print(
+					"error while evaluating function 'copy' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
 			if arguments[1].type ~= tokens.array and arguments[1].type ~= tokens.dictionary then
-				print("ERROR: Unexpected type of argument to function 'copy' (expected array or dictionary): " .. arguments[1].type)
+				print(
+					"error while evaluating function 'copy' at line" .. line
+					.. ": expected array or dictionary while evaluating argument #1, got '"
+					.. string.lower(arguments[1].type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -181,9 +195,15 @@ scopes.globalScope = scopes.Scope(
 		end),
 
 
-		len = tokens.Token(tokens.nativeFunction, function (arguments)
+		len = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'len' (expected 1): " .. #arguments)
+				print(
+					"error while evaluating function 'len' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -201,13 +221,19 @@ scopes.globalScope = scopes.Scope(
 					)
 				)
 			else
-				print("ERROR: Unexpected type of argument to function 'len' (expected array or string): " .. arguments[1].type)
+				print(
+					"error while evaluating function 'len' at line" .. line
+					.. ": expected array or string while evaluating argument #1, got '"
+					.. string.lower(arguments[1].type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 		end),
 
 
-		print = tokens.Token(tokens.nativeFunction, function (arguments)
+		print = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments == 0 then
 				print()
 			else
@@ -219,7 +245,11 @@ scopes.globalScope = scopes.Scope(
 
 						print(string.sub(value, 2, #value - 1))
 					elseif v.type == tokens.nativeFunction or v.type == tokens.userFunction then
-						print("function " .. v.value.name)
+						if v.value.name == nil then
+							print("anonymous function")
+						else
+							print("function " .. v.value.name)
+						end
 					elseif v.type == tokens.array or v.type == tokens.dictionary then
 						print(repr(v))
 					else
@@ -230,9 +260,15 @@ scopes.globalScope = scopes.Scope(
 		end),
 
 
-		randint = tokens.Token(tokens.nativeFunction, function (arguments)
+		randint = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments < 1 or #arguments > 2 then
-				print("ERROR: Unexpected number of arguments to function 'randint' (expected 1-2): " .. #arguments)
+				print(
+					"error while evaluating function 'randint' at line " .. line
+					.. ": expected 1-2 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -248,17 +284,29 @@ scopes.globalScope = scopes.Scope(
 			end
 
 			if min.type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'randint' (expected number): " .. arguments[1].type)
+				print(
+					"error while evaluating function 'randint' at line" .. line
+					.. ": expected number while evaluating argument #1, got '"
+					.. string.lower(min.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
-			if min.type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'randint' (expected number): " .. arguments[2].type)
+			if max.type ~= tokens.number then
+				print(
+					"error while evaluating function 'randint' at line" .. line
+					.. ": expected number while evaluating argument #2, got '"
+					.. string.lower(max.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			if max.value < min.value then
-				return tokens.Token(tokens.number, arguments[1].value)
+				return tokens.Token(tokens.number, min.value)
 			end
 
 			return tokens.Token(
@@ -268,9 +316,15 @@ scopes.globalScope = scopes.Scope(
 		end),
 
 
-		range = tokens.Token(tokens.nativeFunction, function (arguments)
+		range = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments < 1 or #arguments > 3 then
-				print("ERROR: Unexpected number of arguments to function 'range' (expected 1-3): " .. #arguments)
+				print(
+					"error while evaluating function 'range' at line " .. line
+					.. ": expected 1-3 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -293,17 +347,35 @@ scopes.globalScope = scopes.Scope(
 			end
 
 			if min.type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'range' (expected number): " .. min.type)
+				print(
+					"error while evaluating function 'range' at line" .. line
+					.. ": expected number while evaluating argument #1, got '"
+					.. string.lower(min.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			if max.type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'range' (expected number): " .. max.type)
+				print(
+					"error while evaluating function 'range' at line" .. line
+					.. ": expected number while evaluating argument #2, got '"
+					.. string.lower(max.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			if step.type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'range' (expected number): " .. step.type)
+				print(
+					"error while evaluating function 'range' at line" .. line
+					.. ": expected number while evaluating argument #3, got '"
+					.. string.lower(step.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -320,9 +392,15 @@ scopes.globalScope = scopes.Scope(
 		end),
 
 
-		type = tokens.Token(tokens.nativeFunction, function (arguments)
+		type = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'type' (expected 1): " .. #arguments)
+				print(
+					"error while evaluating function 'type' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -366,9 +444,15 @@ scopes.array = scopes.Scope(
 		sort        = {},
 	},
 	{
-		contains = tokens.Token(tokens.nativeFunction, function (arguments)
+		contains = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'array.contains' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.contains' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -382,9 +466,15 @@ scopes.array = scopes.Scope(
 		end),
 
 
-		find = tokens.Token(tokens.nativeFunction, function (arguments)
+		find = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'array.find' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.find' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -400,30 +490,52 @@ scopes.array = scopes.Scope(
 		end),
 
 
-		insert = tokens.Token(tokens.nativeFunction, function (arguments)
+		insert = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 < 1 or #arguments - 1 > 2 then
-				print("ERROR: Unexpected number of arguments to function 'array.insert' (expected 2): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.insert' at line " .. line
+					.. ": expected 1-2 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
-			if arguments[3].type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'array.insert' (expected number): " .. arguments[3].type)
+			if arguments[3] == nil then
+				tablex.push(arguments[1].value, arguments[2])
+			else
+				if arguments[3].type ~= tokens.number then
+					print(
+					"error while evaluating function 'array.insert' at line" .. line
+					.. ": expected number while evaluating argument #2, got '"
+					.. string.lower(arguments[3].type)
+					.. "' instead"
+				)
+
 				os.exit()
-			end
+				end
 
-			if arguments[3].value < 0 then
-				arguments[3].value = arguments[3].value + #arguments[1].value + 1
-			end
+				if arguments[3].value < 0 then
+					arguments[3].value = arguments[3].value + #arguments[1].value + 1
+				end
 
-			table.insert(arguments[1].value, arguments[3].value + 1, arguments[2])
+				table.insert(arguments[1].value, arguments[3].value + 1, arguments[2])
+			end
 
 			return arguments[1]
 		end),
 
 
-		randelement = tokens.Token(tokens.nativeFunction, function (arguments)
+		randelement = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
-				print("ERROR: Unexpected number of arguments to function 'array.randelement' (expected 0): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.randelement' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -431,14 +543,26 @@ scopes.array = scopes.Scope(
 		end),
 
 
-		remove = tokens.Token(tokens.nativeFunction, function (arguments)
+		remove = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'array.remove' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.remove' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
 			if arguments[2].type ~= tokens.number then
-				print("ERROR: Unexpected type of argument to function 'array.remove' (expected number): " .. arguments[2].type)
+				print(
+					"error while evaluating function 'array.remove' at line" .. line
+					.. ": expected number while evaluating argument #1, got '"
+					.. string.lower(arguments[2].type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -452,9 +576,15 @@ scopes.array = scopes.Scope(
 		end),
 
 
-		reverse = tokens.Token(tokens.nativeFunction, function (arguments)
+		reverse = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
-				print("ERROR: Unexpected number of arguments to function 'array.reverse' (expected 0): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.reverse' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -469,9 +599,15 @@ scopes.array = scopes.Scope(
 		end),
 
 
-		sort = tokens.Token(tokens.nativeFunction, function (arguments)
+		sort = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 > 1 then
-				print("ERROR: Unexpected number of arguments to function 'array.sort' (expected 0-1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'array.sort' at line " .. line
+					.. ": expected 0-1 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -526,9 +662,15 @@ scopes.dictionary = scopes.Scope(
 		values   = {},
 	},
 	{
-		contains = tokens.Token(tokens.nativeFunction, function (arguments)
+		contains = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.contains' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.contains' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -542,9 +684,15 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
-		find = tokens.Token(tokens.nativeFunction, function (arguments)
+		find = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.find' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.find' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -560,9 +708,15 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
-		insert = tokens.Token(tokens.nativeFunction, function (arguments)
+		insert = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 2 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.insert' (expected 2): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.insert' at line " .. line
+					.. ": expected 2 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -585,9 +739,15 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
-		keys = tokens.Token(tokens.nativeFunction, function (arguments)
+		keys = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.keys' (expected 0): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.keys' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -601,9 +761,15 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
-		remove = tokens.Token(tokens.nativeFunction, function (arguments)
+		remove = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.remove' (expected 1): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.remove' at line " .. line
+					.. ": expected 1 argument, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 
@@ -617,9 +783,15 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
-		values = tokens.Token(tokens.nativeFunction, function (arguments)
+		values = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
-				print("ERROR: Unexpected number of arguments to function 'dictionary.values' (expected 0): " .. #arguments - 1)
+				print(
+					"error while evaluating function 'dictionary.values' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
 				os.exit()
 			end
 

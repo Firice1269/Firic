@@ -5,62 +5,96 @@ local tokens    = require("src.tokens")
 
 local parser = {}
 
+local newlines = {""}
+
+
+local function shift(tokenizedCode)
+	local value = tablex.shift(tokenizedCode)
+
+	if value.type == tokens.eol and tokenizedCode[1].type ~= tokens.eof then
+		tablex.push(newlines, "")
+	end
+
+	return value
+end
+
 
 function parser.parseStatement(tokenizedCode)
+	local start = #newlines
+
 	local token = tokenizedCode[1]
 
 	if token.value == "break" then
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
-			print("ERROR: Unexpected token inside break statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
+			print(
+				"error while parsing break statement at line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. tokenizedCode[1].value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
-		return ast.Node(ast.Break)
+		return ast.Node(start,  ast.Break)
 	elseif token.value == "continue" then
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
-			print("ERROR: Unexpected token inside continue statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
+			print(
+				"error while parsing continue statementat line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. tokenizedCode[1].value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
-		return ast.Node(ast.Continue)
+		return ast.Node(start,  ast.Continue)
 	elseif token.value == "func" then
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
-		local func = parser.parseFunction(tokenizedCode)
+		local func = parser.parseFunction(tokenizedCode, start)
 
 		if func.value.name == nil then
-			print("ERROR: Unexpected name of function (expected non-nil value): " .. func.value.name)
+			print("error while parsing function definition at line " .. start .. ": expected identifier while parsing name, got '(' instead")
 			os.exit()
 		end
 
 		return func
 	elseif token.value == "let" or token.value == "var" then
-		return parser.parseVariableDeclaration(tokenizedCode, false)
+		return parser.parseVariableDeclaration(tokenizedCode)
 	elseif token.value == "if" then
 		return parser.parseIfStatement(tokenizedCode)
 	elseif token.value == "for" or token.value == "while" then
 		return parser.parseLoop(tokenizedCode)
 	elseif token.value == "return" then
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
 		local value = parser.parseExpression(tokenizedCode)
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
-			print("ERROR: Unexpected token inside return statement (expected newline or semicolon): " .. tablex.repr(tokenizedCode[1]))
+			print(
+				"error while parsing return statement at line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. tokenizedCode[1].value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 
 		return ast.Node(
+			start,
 			ast.Return,
 			value
 		)
@@ -70,25 +104,37 @@ function parser.parseStatement(tokenizedCode)
 end
 
 
-function parser.parseFunction(tokenizedCode)
+function parser.parseFunction(tokenizedCode, start)
 	if tokenizedCode[1].type ~= tokens.identifier and tokenizedCode[1].value ~= "(" then
-		print("ERROR: Unexpected token inside function (expected identifier or open parenthesis): " .. tablex.repr(tokenizedCode[1]))
+		print(
+			"error while parsing function definition at line " .. start
+			.. ": expected identifier or '(', got '"
+			.. tokenizedCode[1].value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
 	local name
 
 	if tokenizedCode[1].type == tokens.identifier then
-		name = tablex.shift(tokenizedCode).value
+		name = shift(tokenizedCode).value
 	end
 
-	local arguments  = parser.parseArguments(tokenizedCode)
+	local arguments = parser.parseArguments(tokenizedCode)
 
 	local parameters = {}
 
 	for _, v in ipairs(arguments) do
 		if v.type ~= ast.Identifier then
-			print("ERROR: Unexpected parameter inside function (expected identifier): " .. tablex.repr(v))
+			print(
+				"error while parsing function definition at line " .. start
+				.. ": expected identifier while parsing parameters, got "
+				.. string.lower(v.type)
+				.. " instead"
+			)
+
 			os.exit()
 		end
 
@@ -96,13 +142,19 @@ function parser.parseFunction(tokenizedCode)
 	end
 
 	while tokenizedCode[1].type == tokens.eol do
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
-		print("ERROR: Unexpected token inside function (expected open brace): " .. tablex.repr(token))
+		print(
+			"error while parsing function definition at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -112,14 +164,21 @@ function parser.parseFunction(tokenizedCode)
 		tablex.push(body, parser.parseStatement(tokenizedCode))
 	end
 
-	token = tablex.shift(tokenizedCode)
+	token = shift(tokenizedCode)
 
 	if token.value ~= "}" then
-		print("ERROR: Unexpected token inside function (expected closed brace): " .. tablex.repr(token))
+		print(
+			"error while parsing function definition at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
 	return ast.Node(
+		start,
 		ast.Function,
 		{
 			name       = name,
@@ -131,7 +190,19 @@ end
 
 
 function parser.parseIfStatement(tokenizedCode)
-	local keyword = tablex.shift(tokenizedCode).value
+	local start = #newlines
+
+	local keyword = shift(tokenizedCode).value
+
+	if keyword ~= "else" and tokenizedCode[1].value == "{" then
+		print(
+			"error while parsing " .. keyword .. " statement at line " .. start
+			.. ": expected expression while parsing condition, got '"
+			.. tokenizedCode[1].value
+			.. "' instead"
+		)
+		os.exit()
+	end
 
 	local condition
 
@@ -140,13 +211,19 @@ function parser.parseIfStatement(tokenizedCode)
 	end
 
 	while tokenizedCode[1].type == tokens.eol do
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
-		print("ERROR: Unexpected token inside " .. keyword .. " statement initiation (expected open brace): " .. tablex.repr(token))
+		print(
+			"error while parsing " .. keyword .. " statement at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -156,18 +233,25 @@ function parser.parseIfStatement(tokenizedCode)
 		tablex.push(body, parser.parseStatement(tokenizedCode))
 	end
 
-	token = tablex.shift(tokenizedCode)
+	token = shift(tokenizedCode)
 
 	if token.value ~= "}" then
-		print("ERROR: Unexpected token inside " .. keyword .. " statement (expected closed brace): " .. tablex.repr(token))
+		print(
+			"error while parsing " .. keyword .. " statement at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
 	while tokenizedCode[1].type == tokens.eol do
-		tablex.shift(tokenizedCode)
+		shift(tokenizedCode)
 	end
 
 	local statement = ast.Node(
+		start,
 		ast.IfStatement,
 		{
 			keyword   = keyword,
@@ -185,23 +269,50 @@ end
 
 
 function parser.parseLoop(tokenizedCode)
-	local keyword    = tablex.shift(tokenizedCode).value
+	local start = #newlines
+
+	local keyword = shift(tokenizedCode).value
+
+	if tokenizedCode[1].value == "{" then
+		print(
+			"error while parsing" .. keyword .. " loop at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. tokenizedCode[1].value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
 	local expression = parser.parseExpression(tokenizedCode)
 
 	if keyword == "for" then
 		if expression.type ~= ast.Identifier then
-			print("ERROR: Unexpected token inside for loop initiation (expected identifier): " .. expression.type)
+			print(
+				"error while parsing for loop at line " .. start
+				.. ": expected identifier while parsing iterator variable declaration, got "
+				.. expression.type
+				.. " instead"
+			)
+
 			os.exit()
 		end
 
-		local token = tablex.shift(tokenizedCode)
+		local token = shift(tokenizedCode)
 
 		if token.value ~= "in" then
-			print("ERROR: Unexpected token inside for loop initiation (expected 'in' keyword): " .. tablex.repr(token))
+			print(
+				"error while parsing " .. keyword .. " loop at line " .. start
+				.. ": expected 'in', got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
 		expression = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = expression,
@@ -211,10 +322,16 @@ function parser.parseLoop(tokenizedCode)
 		)
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
-		print("ERROR: Unexpected token inside " .. keyword .. " loop initiation (expected open brace): " .. tablex.repr(token))
+		print(
+			"error while parsing " .. keyword .. " loop at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -224,14 +341,21 @@ function parser.parseLoop(tokenizedCode)
 		tablex.push(body, parser.parseStatement(tokenizedCode))
 	end
 
-	token = tablex.shift(tokenizedCode)
+	token = shift(tokenizedCode)
 
 	if token.value ~= "}" then
-		print("ERROR: Unexpected token inside " .. keyword .. " loop (expected closed brace): " .. tablex.repr(token))
+		print(
+			"error while parsing " .. keyword .. " loop at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
 	return ast.Node(
+		start,
 		ast.Loop,
 		{
 			keyword    = keyword,
@@ -242,59 +366,87 @@ function parser.parseLoop(tokenizedCode)
 end
 
 
-function parser.parseVariableDeclaration(tokenizedCode, brackets)
-	local constant = tablex.shift(tokenizedCode).value == "let"
+function parser.parseVariableDeclaration(tokenizedCode)
+	local start = #newlines
 
-	local identifier = tablex.shift(tokenizedCode)
+	local constant = shift(tokenizedCode).value == "let"
 
-	if identifier.type ~= tokens.identifier then
-		print("ERROR: Unexpected token inside variable declaration (expected identifier): " .. tablex.repr(identifier))
+	local name = shift(tokenizedCode)
+
+	if name.type ~= tokens.identifier then
+		print(
+			"error while parsing variable declaration at line " .. start
+			.. ": expected identifier while parsing name, got '"
+			.. string.lower(name.type)
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
-	if (token.type == tokens.eol and not brackets) or tokenizedCode[1].value == ";" then
+	if token.type == tokens.eol or tokenizedCode[1].value == ";" then
 		if constant then
-			print("ERROR: Unexpected token inside variable declaration (expected equals): " .. tablex.repr(token))
+			print(
+				"error while parsing variable declaration at line " .. start
+				.. ": expected expression while parsing value, got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
 		if tokenizedCode[1].value == ";" then
-			token = tablex.shift(tokenizedCode)
+			token = shift(tokenizedCode)
 
 			while tokenizedCode[1].type == tokens.eol do
-				tablex.shift(tokenizedCode)
+				shift(tokenizedCode)
 			end
 		end
 
 		return ast.Node(
+			start,
 			ast.VariableDeclaration,
 			{
-				name     = identifier.value,
+				name     = name.value,
 				constant = constant,
 				value    = ast.Node(ast.Identifier, "null")
 			}
 		)
 	elseif token.value ~= "=" then
-		print("ERROR: Unexpected token inside variable declaration (expected equals, newline, or semicolon): " .. tablex.repr(token))
+		print(
+			"error while parsing variable declaration at line " .. start
+			.. ": expected '\\n', ';', or '=', got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
 	local declaration = ast.Node(
+		start,
 		ast.VariableDeclaration,
 		{
-			name     = identifier.value,
+			name     = name.value,
 			constant = constant,
-			value    = parser.parseExpression(tokenizedCode, brackets),
+			value    = parser.parseExpression(tokenizedCode),
 		}
 	)
 
 	if token.value ~= ";" then
-		token = tablex.shift(tokenizedCode)
+		token = shift(tokenizedCode)
 
-		if not (token.type == tokens.eol and not brackets) and token.value ~= ";" then
-			print("ERROR: Unexpected token inside variable declaration (expected newline or semicolon): " .. tablex.repr(token))
+		if token.type ~= tokens.eol and token.value ~= ";" then
+			print(
+				"error while parsing variable declaration at line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	end
@@ -326,6 +478,7 @@ function parser.parseExpression(tokenizedCode, brackets)
 
 		for i, v in ipairs(indices) do
 			table.remove(tokenizedCode, v - i + 1)
+			tablex.push(newlines, "")
 		end
 	end
 
@@ -334,20 +487,29 @@ end
 
 
 function parser.parseVariableAssignment(tokenizedCode, brackets)
-	local left = parser.parseLogicalExpression(tokenizedCode)
+	local left = parser.parseTernaryExpression(tokenizedCode)
 
 	if tokenizedCode[1].type == tokens.assignmentOperator then
-		local operator = tablex.shift(tokenizedCode).value
-		local right    = parser.parseExpression(tokenizedCode, brackets)
+		local start = #newlines
 
-		local token = tablex.shift(tokenizedCode)
+		local operator = shift(tokenizedCode).value
+		local right    = parser.parseTernaryExpression(tokenizedCode)
+
+		local token = shift(tokenizedCode)
 
 		if not (token.type == tokens.eol and not brackets) and token.value ~= ";" then
-			print("ERROR: Unexpected token inside variable assignment (expected newline or semicolon): " .. tablex.repr(token))
+			print(
+				"error while parsing variable assignment at line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
 		left = ast.Node(
+			start,
 			ast.VariableAssignment,
 			{
 				left     = left,
@@ -361,14 +523,57 @@ function parser.parseVariableAssignment(tokenizedCode, brackets)
 end
 
 
+function parser.parseTernaryExpression(tokenizedCode)
+	local condition = parser.parseLogicalExpression(tokenizedCode)
+
+	while tokenizedCode[1].value == "?" do
+		local start = #newlines
+
+		shift(tokenizedCode)
+
+		local left = parser.parseLogicalExpression(tokenizedCode)
+
+		local token = shift(tokenizedCode)
+
+		if token.value ~= ":" then
+			print(
+				"error while parsing ternary expression at line " .. start
+				.. ": expected ':', got '"
+				.. token.value
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		local right = parser.parseLogicalExpression(tokenizedCode)
+
+		condition = ast.Node(
+			start,
+			ast.TernaryExpression,
+			{
+				condition = condition,
+				left      = left,
+				right     = right,
+			}
+		)
+	end
+
+	return condition
+end
+
+
 function parser.parseLogicalExpression(tokenizedCode)
 	local left = parser.parseBitwiseExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "&&" or tokenizedCode[1].value == "||" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseBitwiseExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -386,10 +591,13 @@ function parser.parseBitwiseExpression(tokenizedCode)
 	local left = parser.parseInequalExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "&" or tokenizedCode[1].value == "|" or tokenizedCode[1].value == "^" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseInequalExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -412,10 +620,13 @@ function parser.parseInequalExpression(tokenizedCode)
 		or tokenizedCode[1].value == ">"
 		or tokenizedCode[1].value == ">="
 	do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseEqualExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -433,10 +644,13 @@ function parser.parseEqualExpression(tokenizedCode)
 	local left = parser.parseShiftExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "==" or tokenizedCode[1].value == "!=" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseShiftExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -454,10 +668,13 @@ function parser.parseShiftExpression(tokenizedCode)
 	local left = parser.parseAdditiveExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "<<" or tokenizedCode[1].value == ">>" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseAdditiveExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -475,10 +692,13 @@ function parser.parseAdditiveExpression(tokenizedCode)
 	local left = parser.parseMultiplicativeExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "+" or tokenizedCode[1].value == "-" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseMultiplicativeExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -496,10 +716,13 @@ function parser.parseMultiplicativeExpression(tokenizedCode)
 	local left = parser.parseExponentialExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "*" or tokenizedCode[1].value == "/" or tokenizedCode[1].value == "%" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseExponentialExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -517,10 +740,13 @@ function parser.parseExponentialExpression(tokenizedCode)
 	local left = parser.parseMemberExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "**" or tokenizedCode[1].value == "//" do
-		local operator = tablex.shift(tokenizedCode).value
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
 		local right    = parser.parseMemberExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.BinaryExpression,
 			{
 				left     = left,
@@ -538,11 +764,14 @@ function parser.parseMemberExpression(tokenizedCode)
 	local left = parser.parsePrimaryExpression(tokenizedCode)
 
 	while tokenizedCode[1].value == "." do
-		tablex.shift(tokenizedCode)
+		local start = #newlines
+
+		shift(tokenizedCode)
 
 		local right = parser.parsePrimaryExpression(tokenizedCode)
 
 		left = ast.Node(
+			start,
 			ast.MemberExpression,
 			{
 				left  = left,
@@ -556,42 +785,59 @@ end
 
 
 function parser.parsePrimaryExpression(tokenizedCode)
-	local token = tablex.shift(tokenizedCode)
+	local start = #newlines
+
+	local token = shift(tokenizedCode)
 
 	if token.value == "func" then
-		local func = parser.parseFunction(tokenizedCode)
+		local func = parser.parseFunction(tokenizedCode, start)
 
 		if func.name ~= nil then
-			print("ERROR: Unexpected name of function (expected nil value): " .. func.name)
+			print(
+				"error while parsing anonymous function at line " .. start
+				.. ": expected '(' while parsing parameters, got '"
+				.. func.name
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
 		return func
 	elseif token.value == "(" then
-		local value = parser.parseExpression(tokenizedCode)
+		local value = parser.parseExpression(tokenizedCode, true)
 
-		token = tablex.shift(tokenizedCode)
+		token = shift(tokenizedCode)
 
 		if token.value ~= ")" then
-			print("ERROR: Unexpected token inside parentheses (expected closing parenthesis): " .. tablex.repr(token))
+			print(
+				"error while parsing parenthesized expression at line " .. start
+				.. ": expected ')', got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
 		return value
 	elseif token.value == "[" then
 		return ast.Node(
+			start,
 			ast.Array,
 			parser.parseArray(tokenizedCode)
 		)
 	elseif token.value == "{" then
 		return ast.Node(
+			start,
 			ast.Dictionary,
 			parser.parseDictionary(tokenizedCode)
 		)
 	elseif token.value == "-" or token.value == "~" or token.value == "!" then
-		local value = parser.parseExpression(tokenizedCode)
+		local value = parser.parsePrimaryExpression(tokenizedCode)
 
 		return ast.Node(
+			start,
 			ast.UnaryExpression,
 			{
 				operator = token.value,
@@ -599,13 +845,22 @@ function parser.parsePrimaryExpression(tokenizedCode)
 			}
 		)
 	elseif token.type == tokens.str then
-		return ast.Node(ast.String, token.value)
+		return ast.Node(
+			start,
+			ast.String,
+			token.value
+		)
 	elseif token.type == tokens.identifier then
-		local expression = ast.Node(ast.Identifier, token.value)
+		local expression = ast.Node(
+			start,
+			ast.Identifier,
+			token.value
+		)
 
 		if tokenizedCode[1].value == "(" then
 			while tokenizedCode[1].value == "(" do
 				expression = ast.Node(
+					start,
 					ast.FunctionCall,
 					{
 						call      = expression,
@@ -615,24 +870,31 @@ function parser.parsePrimaryExpression(tokenizedCode)
 			end
 
 			if tokenizedCode[1].value == ";" then
-				tablex.shift(tokenizedCode)
+				shift(tokenizedCode)
 				return expression
 			end
 		end
 
 		while tokenizedCode[1].value == "[" do
-			tablex.shift(tokenizedCode)
+			shift(tokenizedCode)
 
 			local right = parser.parseExpression(tokenizedCode, true)
 
-			token = tablex.shift(tokenizedCode)
+			token = shift(tokenizedCode)
 
 			if token.value ~= "]" then
-				print("ERROR: Unexpected token inside index expression (expected closed bracket): " .. tablex.repr(token))
+				print(
+					"error while parsing index expression at line " .. start
+					.. ": expected ']', got '"
+					.. token.value
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			expression = ast.Node(
+				start,
 				ast.IndexExpression,
 				{
 					left  = expression,
@@ -643,20 +905,42 @@ function parser.parsePrimaryExpression(tokenizedCode)
 
 		return expression
 	elseif token.type == tokens.float or token.type == tokens.int then
-		return ast.Node(ast.Number, token.value)
+		return ast.Node(
+			start,
+			ast.Number,
+			token.value
+		)
 	elseif token.type ~= tokens.eol then
-		print("ERROR: Unexpected token: " .. tablex.repr(token))
+		print(
+			"error while parsing expression at line " .. start
+			.. ": expected 'func', '(', '[', '{', unary operator, string, identifier, or number; got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 end
 
 
 function parser.parseArguments(tokenizedCode)
-	local token = tablex.shift(tokenizedCode)
+	local start = #newlines
+
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "(" then
-		print("ERROR: Unexpected token inside function call (expected open parenthesis): " .. tablex.repr(token))
+		print(
+			"error while parsing function call at line " .. start
+			.. ": expected '(' while parsing parameters, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
 	end
 
 	local arguments = {}
@@ -665,16 +949,22 @@ function parser.parseArguments(tokenizedCode)
 		tablex.push(arguments, parser.parseExpression(tokenizedCode, true))
 
 		while tokenizedCode[1].value == "," do
-			tablex.shift(tokenizedCode)
+			shift(tokenizedCode)
 
 			tablex.push(arguments, parser.parseExpression(tokenizedCode, true))
 		end
 	end
 
-	token = tablex.shift(tokenizedCode)
+	token = shift(tokenizedCode)
 
 	if token.value ~= ")" then
-		print("ERROR: Unexpected token inside function call (expected closed parenthesis): " .. tablex.repr(token))
+		print(
+			"error while parsing function call at line " .. start
+			.. ": expected ')' while parsing parameters, got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -683,13 +973,19 @@ end
 
 
 function parser.parseArray(tokenizedCode)
+	local start = #newlines
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
+	end
+
 	local values = {}
 
 	if tokenizedCode[1].value ~= "]" then
 		tablex.push(values, parser.parseExpression(tokenizedCode, true))
 
 		while tokenizedCode[1].value == "," do
-			tablex.shift(tokenizedCode)
+			shift(tokenizedCode)
 
 			if tokenizedCode[1].value == "]" then
 				break
@@ -699,10 +995,16 @@ function parser.parseArray(tokenizedCode)
 		end
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "]" then
-		print("ERROR: Unexpected token inside array (expected closed bracket): " .. tablex.repr(token))
+		print(
+			"error while parsing array at line " .. start
+			.. ": expected ']', got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -711,15 +1013,27 @@ end
 
 
 function parser.parseDictionary(tokenizedCode)
+	local start = #newlines
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
+	end
+
 	local values = {}
 
 	if tokenizedCode[1].value ~= "}" then
 		local key = parser.parseExpression(tokenizedCode, true)
 
-		local token = tablex.shift(tokenizedCode)
+		local token = shift(tokenizedCode)
 
 		if token.value ~= ":" then
-			print("ERROR: Unexpected token inside dictionary (expected colon): " .. tablex.repr(token))
+			print(
+				"error while parsing dictionary at line " .. start
+				.. ": expected ':', got '"
+				.. token.value
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
@@ -732,7 +1046,7 @@ function parser.parseDictionary(tokenizedCode)
 		)
 
 		while tokenizedCode[1].value == "," do
-			tablex.shift(tokenizedCode)
+			shift(tokenizedCode)
 
 			if tokenizedCode[1].value == "}" then
 				break
@@ -740,10 +1054,16 @@ function parser.parseDictionary(tokenizedCode)
 
 			key = parser.parseExpression(tokenizedCode, true)
 
-			token = tablex.shift(tokenizedCode)
+			token = shift(tokenizedCode)
 
 			if token.value ~= ":" then
-				print("ERROR: Unexpected token inside dictionary (expected colon): " .. tablex.repr(token))
+				print(
+					"error while parsing dictionary at line " .. start
+					.. ": expected ':', got '"
+					.. token.value
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -757,10 +1077,16 @@ function parser.parseDictionary(tokenizedCode)
 		end
 	end
 
-	local token = tablex.shift(tokenizedCode)
+	local token = shift(tokenizedCode)
 
 	if token.value ~= "}" then
-		print("ERROR: Unexpected token inside dictionary (expected closed brace): " .. tablex.repr(token))
+		print(
+			"error while parsing dictionary at line " .. start
+			.. ": expected '}', got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -771,12 +1097,14 @@ end
 function parser.parse(sourceCode)
 	local tokenizedCode = tokenizer.tokenize(sourceCode)
 
-	local program = ast.Node(ast.Program)
+	local program = ast.Node(1, ast.Program)
 
 	while tokenizedCode[1].type ~= tokens.eof do
 		local statement = parser.parseStatement(tokenizedCode)
 		tablex.push(program.value, statement)
 	end
+
+	program.endLine = #newlines
 
 	return program
 end

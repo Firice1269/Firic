@@ -23,7 +23,7 @@ There are 7 basic types in Firic: `array`, `bool` (short for "boolean"), `dict` 
 
 Arrays are objects which contain other objects. Arrays can contain any number of values, including none at all, and can contain other arrays. Arrays can be created by enclosing a list of comma-separated values with brackets (`[]`).
 
-To reference a value inside of an array, store the array in a variable (see [Variables](#variables) below) and reference that variable's name, followed by an expression that evaluates to a number (enclosed in brackets). That number is the index of the value to be referenced (indices start at 0 and increment for each element in the array).
+To reference a value inside of an array, store the array in a variable (see [Variables](#variables) below) and reference that variable's name, followed by an expression that evaluates to a number (enclosed in brackets). That number is the index of the value to be referenced. Indices start at 0 and increment for each element in the array, but negative indices are also allowed. Negative indices start at the last item in the array (`array[-4]` would be the fourth-to-last element in `array`, and `array[-1]` would be the last).
 
 Example:
 ```swift
@@ -37,16 +37,13 @@ let array = [
 	[1, 18, 18, 1, 25],
 ]
 
-print(array[6])
+print(array[-2])
 ```
 Output:
 ```lua
 [
 	1,
-	18,
-	18,
-	1,
-	25,
+	14
 ]
 ```
 
@@ -192,6 +189,19 @@ Firic supports the following operators:
 
 `>=`: greater than/equal to
 
+#### Conditional Operator
+
+The conditional operator (`?:`) takes in three arguments (in other words, it is a ternary operator). If the first argument is `true`, then the expression evaluates to the second argument. Otherwise, it evaluates to the third.
+
+Example:
+```lua
+print(1 + 1 == 2 ? false : true)
+```
+Output:
+```
+false
+```
+
 ### Variables
 
 Firic uses two different keywords for declaring variables: `let` and `var`. Variables declared with the `let` keyword are immutable, while those declared with the `var` keyword are mutable.
@@ -325,7 +335,7 @@ The `array.contains` function takes in one argument and returns `true` if the ar
 
 The `array.find` function takes in one argument and returns an array containing every index at which that element occurs in the array.
 
-The `array.insert` function takes in two arguments (the second of which must be a number), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
+The `array.insert` function takes in two arguments (the second of which must be a number), the second of which is optional (defaults to `-1`), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
 
 The `array.randelement` function takes in no arguments and returns a random element from the array.
 
@@ -349,4 +359,4 @@ The `dictionary.values` function takes in no arguments and returns an array cont
 
 ## Using Firic
 
-Firic does not have a REPL (but it will in the future). Instead, to run any Firic code, you must create a file with the `.fi` file extension, then run the `main.lua` file with the path of the Firic file as a string (the `firic.bat` (Windows) and `firic.sh` (Linux) files do this).
+Firic does not have a REPL (but it will in the future). Instead, to run any Firic code, you must create a file with the `.fi` file extension, then run the `main.lua` file with the path of the Firic file (the `firic.bat` (Windows) and `firic.sh` (Linux) files do this).

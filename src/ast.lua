@@ -5,11 +5,12 @@ ast.NodeType = {
 	PROGRAM = "Program",
 
 	EXPRESSION = {
-		BINARY = "BinaryExpression",
-		CALL   = "FunctionCall",
-		INDEX  = "IndexExpression",
-		MEMBER = "MemberExpression",
-		UNARY  = "UnaryExpression",
+		BINARY  = "BinaryExpression",
+		CALL    = "FunctionCall",
+		INDEX   = "IndexExpression",
+		MEMBER  = "MemberExpression",
+		TERNARY = "TernaryExpression",
+		UNARY   = "UnaryExpression",
 	},
 
 	LITERAL = {
@@ -39,11 +40,12 @@ ast.NodeType = {
 
 ast.Program = ast.NodeType.PROGRAM
 
-ast.BinaryExpression = ast.NodeType.EXPRESSION.BINARY
-ast.FunctionCall     = ast.NodeType.EXPRESSION.CALL
-ast.IndexExpression  = ast.NodeType.EXPRESSION.INDEX
-ast.MemberExpression = ast.NodeType.EXPRESSION.MEMBER
-ast.UnaryExpression  = ast.NodeType.EXPRESSION.UNARY
+ast.BinaryExpression  = ast.NodeType.EXPRESSION.BINARY
+ast.FunctionCall      = ast.NodeType.EXPRESSION.CALL
+ast.IndexExpression   = ast.NodeType.EXPRESSION.INDEX
+ast.MemberExpression  = ast.NodeType.EXPRESSION.MEMBER
+ast.TernaryExpression = ast.NodeType.EXPRESSION.TERNARY
+ast.UnaryExpression   = ast.NodeType.EXPRESSION.UNARY
 
 ast.Array      = ast.NodeType.LITERAL.ARRAY
 ast.Dictionary = ast.NodeType.LITERAL.DICTIONARY
@@ -62,11 +64,12 @@ ast.VariableAssignment  = ast.NodeType.STATEMENT.VARIABLE.ASSIGNMENT
 ast.VariableDeclaration = ast.NodeType.STATEMENT.VARIABLE.DECLARATION
 
 
-function ast.Node(type, value)
+function ast.Node(start, type, value)
 	value = value or {}
 
 	return {
-		type = type,
+		start = start,
+		type  = type,
 		value = value,
 	}
 end

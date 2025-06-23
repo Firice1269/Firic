@@ -28,42 +28,90 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value < right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '<' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "<=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value <= right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '<=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "<<" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value << right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '<<' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == ">" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value > right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '>' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == ">=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value >= right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '>=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == ">>" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.boolean, left.value >> right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '>>' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "==" then
@@ -74,70 +122,150 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value & right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '&' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "&&" then
 		if left.type == tokens.boolean and right.type == tokens.boolean then
 			result = tokens.Token(tokens.boolean, left.value and right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '&&' (expected booleans): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected booleans while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "|" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value | right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '|' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "||" then
 		if left.type == tokens.boolean and right.type == tokens.boolean then
 			result = tokens.Token(tokens.boolean, left.value or right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '||' (expected booleans): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected booleans while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "^" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ~ right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '^' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "**" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ^ right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '**' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "//" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 		else
-			print("ERROR: Unexpected argument types for operator '//' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "*" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value * right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '*' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "/" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value / right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '/' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "%" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value % right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '%' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "+" then
@@ -147,14 +275,30 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 			if left.type == tokens.number then
 				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"")
 			elseif left.type ~= tokens.string then
-				print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				print(
+					"error while evaluating binary expression at line " .. expression.start
+					.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+					.. string.lower(left.type)
+					.. "'" .. operator
+					.. string.lower(right.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			if right.type == tokens.number then
 				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
 			elseif right.type ~= tokens.string then
-				print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				print(
+					"error while evaluating binary expression at line " .. expression.start
+					.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+					.. string.lower(left.type)
+					.. "'" .. operator
+					.. string.lower(right.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -163,14 +307,30 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			print("ERROR: Unexpected argument types for operator '+' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "-" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value - right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '-' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating binary expression at line " .. expression.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	end
@@ -199,7 +359,7 @@ function interpreter.evaluateDictionary(dictionary, scope)
 
 	for i, v in ipairs(keys) do
 		if v == keys[i + 1] then
-			print("ERROR: Duplicate key inside dictionary: " .. v)
+			print("error while parsing dictionary at line " .. dictionary.start .. ": duplicate key: " .. v)
 			os.exit()
 		end
 	end
@@ -214,7 +374,7 @@ function interpreter.evaluateFunction(expression, scope)
 	if expression.name == nil then
 		return func
 	else
-		return scopes.declareVariable(expression.name, func, true, scope)
+		return scopes.declareVariable(expression.name, func, true, scope, expression.start)
 	end
 end
 
@@ -229,7 +389,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 	local func = interpreter.evaluate(expression.call, scope)
 
 	if func.type == tokens.nativeFunction then
-		return func.value(arguments) or tokens.Token(tokens.null, "null")
+		return func.value(arguments, expression.start) or tokens.Token(tokens.null, "null")
 	elseif func.type == tokens.userFunction then
 		func = func.value
 
@@ -237,7 +397,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		scope        = scopes.Scope(parent)
 
 		for i, v in ipairs(func.parameters) do
-			scopes.declareVariable(v, arguments[i], false, scope)
+			scopes.declareVariable(v, arguments[i], false, scope, expression.start)
 		end
 
 		local value = tokens.Token(tokens.null, "null")
@@ -256,7 +416,13 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		return value
 	end
 
-	print("ERROR: Unexpected type of call (expected function): " .. tablex.repr(func))
+	print(
+		"error while evaluating function call at line " .. expression.start
+		.. ": expected function, got '"
+		.. string.lower(func.type)
+		.. "' instead"
+	)
+
 	os.exit()
 end
 
@@ -270,7 +436,13 @@ function interpreter.evaluateLoop(statement, scope)
 		local array = interpreter.evaluate(statement.expression.value.right, parent)
 
 		if array.type ~= tokens.array then
-			print("ERROR: Unexpected type of for loop iterator (expected array): " .. array.type)
+			print(
+				"error while evaluating for loop at line" .. statement.start
+				.. ": expected array while evaluating iterator, got '"
+				.. string.lower(array.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
@@ -282,7 +454,7 @@ function interpreter.evaluateLoop(statement, scope)
 			end
 
 			scope = scopes.Scope(parent)
-			scopes.declareVariable(statement.expression.value.left.value, v, false, scope)
+			scopes.declareVariable(statement.expression.value.left.value, v, false, scope, statement.start)
 
 			for _, w in ipairs(statement.body) do
 				w = interpreter.evaluate(w, scope)
@@ -384,7 +556,7 @@ end
 
 
 function interpreter.evaluateIdentifier(identifier, scope)
-	return scopes.lookupVariable(identifier.value, scope)
+	return scopes.lookupVariable(identifier.value, scope, identifier.start)
 end
 
 
@@ -408,7 +580,13 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 		local v = interpreter.evaluate(statement.condition, scope)
 
 		if v.type ~= tokens.boolean then
-			print("ERROR: Unexpected elseif statement condition type (expected boolean): " .. tablex.repr(v))
+			print(
+				"error while evaluating elseif statement at line" .. statement.start
+				.. ": expected boolean while evaluating condition, got '"
+				.. string.lower(v.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
@@ -420,7 +598,13 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 	end
 
 	if condition.type ~= tokens.boolean then
-		print("ERROR: Unexpected if statement condition type (expected boolean): " .. tablex.repr(condition))
+		print(
+			"error while evaluating if statement at line" .. statement.start
+			.. ": expected boolean while evaluating condition, got '"
+			.. string.lower(condition.type)
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -459,7 +643,13 @@ function interpreter.evaluateIndexExpression(expression, scope)
 
 	if left.type == tokens.array then
 		if index.type ~= tokens.number then
-			print("ERROR: Unexpected index type inside index expression (expected number): " .. index.type)
+			print(
+				"error while evaluating index expression at line " .. expression.start
+				.. ": expected number while evaluating index, got '"
+				.. string.lower(index.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 
@@ -505,6 +695,28 @@ function interpreter.evaluateProgram(program, scope)
 end
 
 
+function interpreter.evaluateTernaryExpression(expression, scope)
+	local condition = interpreter.evaluate(expression.condition, scope)
+
+	if condition.type ~= tokens.boolean then
+		print(
+			"error while evaluating ternary expression at line" .. expression.start
+			.. ": expected boolean while evaluating condition, got '"
+			.. string.lower(condition.type)
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	if condition.value then
+		return interpreter.evaluate(expression.left, scope)
+	else
+		return interpreter.evaluate(expression.right, scope)
+	end
+end
+
+
 function interpreter.evaluateUnaryExpression(expression, scope)
 	local operator = expression.operator
 	local value    = interpreter.evaluate(expression.value, scope)
@@ -515,21 +727,42 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 		if value.type == tokens.number then
 			result = tokens.Token(tokens.number, -value.value)
 		else
-			print("ERROR: Unexpected argument type for operator '-' (expected number): " .. value.type)
+			print(
+				"error while evaluating unary expression at at line " .. expression.start
+				.. ": expected number while evaluating arguments of unary operator '" .. operator .. "', got '"
+				.. "'" .. operator
+				.. string.lower(value.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "~" then
 		if value.type == tokens.number then
 			result = tokens.Token(tokens.number, ~value.value)
 		else
-			print("ERROR: Unexpected argument type for operator '~' (expected number): " .. value.type)
+			print(
+				"error while evaluating unary expression at at line " .. expression.start
+				.. ": expected number while evaluating arguments of unary operator '" .. operator .. "', got '"
+				.. "'" .. operator
+				.. string.lower(value.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "!" then
 		if value.type == tokens.boolean then
 			result = tokens.Token(tokens.boolean, not value.value)
 		else
-			print("ERROR: Unexpected argument type for operator '!' (expected boolean): " .. value.type)
+			print(
+				"error while evaluating unary expression at at line " .. expression.start
+				.. ": expected boolean while evaluating arguments of unary operator '" .. operator .. "', got '"
+				.. "'" .. operator
+				.. string.lower(value.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	end
@@ -538,18 +771,24 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 end
 
 
-function interpreter.evaluateVariableAssignment(expression, scope)
-	local name = expression.left
+function interpreter.evaluateVariableAssignment(statement, scope)
+	local name = statement.left
 
 	if name.type ~= ast.Identifier then
-		print("ERROR: Unexpected token inside variable assignment (expected identifier): " .. tablex.repr(name))
+		print(
+			"error while evaluating variable assignment at line " .. statement.start
+			.. ": expected identifier while parsing variable name, got '"
+			.. string.lower(name.type)
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
-	local left = interpreter.evaluate(expression.left, scope)
+	local left = interpreter.evaluate(statement.left, scope)
 
-	local operator = expression.operator
-	local right    = interpreter.evaluate(expression.right, scope)
+	local operator = statement.operator
+	local right    = interpreter.evaluate(statement.right, scope)
 
 	local result = right
 
@@ -557,84 +796,180 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value & right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '&=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "&&=" then
 		if left.type == tokens.boolean and right.type == tokens.boolean then
 			result = tokens.Token(tokens.boolean, left.value and right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '&&=' (expected booleans): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected booleans while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "|=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value | right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '|=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "||=" then
 		if left.type == tokens.boolean and right.type == tokens.boolean then
 			result = tokens.Token(tokens.boolean, left.value or right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '||=' (expected booleans): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected booleans while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "^=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ~ right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '^=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "<<=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value << right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '<<=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == ">>=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value >> right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '>>=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "**=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ^ right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '**=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "//=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 		else
-			print("ERROR: Unexpected argument types for operator '//=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "*=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value * right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '*=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "/=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value / right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '/=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "%=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value % right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '%=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "+=" then
@@ -644,14 +979,30 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 			if left.type == tokens.number then
 				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"")
 			elseif left.type ~= tokens.string then
-				print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				print(
+					"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+				)
+
 				os.exit()
 			end
 
 			if right.type == tokens.number then
 				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
 			elseif right.type ~= tokens.string then
-				print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+				print(
+					"error while evaluating variable assignment at line " .. statement.start
+					.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+					.. string.lower(left.type)
+					.. "'" .. operator
+					.. string.lower(right.type)
+					.. "' instead"
+				)
+
 				os.exit()
 			end
 
@@ -660,25 +1011,41 @@ function interpreter.evaluateVariableAssignment(expression, scope)
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			print("ERROR: Unexpected argument types for operator '+=' (expected numbers or strings): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	elseif operator == "-=" then
 		if left.type == tokens.number and right.type == tokens.number then
 			result = tokens.Token(tokens.number, left.value - right.value)
 		else
-			print("ERROR: Unexpected argument types for operator '-=' (expected numbers): " .. left.type .. ", " .. right.type)
+			print(
+				"error while evaluating variable assignment at line " .. statement.start
+				.. ": expected numbers while evaluating arguments of binary operator '" .. operator .. "', got '"
+				.. string.lower(left.type)
+				.. "'" .. operator
+				.. string.lower(right.type)
+				.. "' instead"
+			)
+
 			os.exit()
 		end
 	end
 
-	return scopes.assignVariable(name.value, result, scope)
+	return scopes.assignVariable(name.value, result, scope, statement.start)
 end
 
 
 function interpreter.evaluateVariableDeclaration(statement, scope)
 	local value = interpreter.evaluate(statement.value, scope) or tokens.Token(tokens.null, "null")
-	return scopes.declareVariable(statement.name, value, statement.constant, scope)
+	return scopes.declareVariable(statement.name, value, statement.constant, scope, statement.start)
 end
 
 
@@ -709,6 +1076,8 @@ function interpreter.evaluate(astNode, scope)
 		return tokens.Token(tokens.string, astNode.value)
 	elseif astNode.type == ast.Program then
 		return interpreter.evaluateProgram(astNode, scope)
+	elseif astNode.type == ast.TernaryExpression then
+		return interpreter.evaluateTernaryExpression(astNode.value, scope)
 	elseif astNode.type == ast.UnaryExpression then
 		return interpreter.evaluateUnaryExpression(astNode.value, scope)
 	elseif astNode.type == ast.VariableAssignment then

@@ -24,6 +24,7 @@ end
 
 function tablex.push(self, element)
 	table.insert(self, #self + 1, element)
+	return element
 end
 
 
@@ -65,21 +66,23 @@ function tablex.repr(self, indentation)
 			text = text .. ",\n"
 		end
 
+		if len ~= 0 then
+			text = string.sub(text, 1, #text - 2) .. "\n"
+		end
+
 		for _ = 1, indentation, 1 do
 			text = text .. "  "
 		end
 
 		text = text .. "}"
 
-		if string.gsub(text, " ", "") == "{\n}" then
+		if len == 0 then
 			text = "{}"
+		elseif len == 1 then
+			text = string.gsub(text, "\n%s*", "")
 		end
 	else
 		text = self
-	end
-
-	if len <= 1 then
-		text = string.gsub(text, "[,(\n  )]", "")
 	end
 
 	return text

@@ -24,21 +24,17 @@
 				{
 					"name": "constant.numeric.firic",
 					"begin": "[0-9]",
-					"end": "?=[^0-9.]"
+					"end": "?=[^0-9]"
 				}
 			]
 		},
 		"entity": {
 			"name": "entity.name.function.firic",
-			"match": "[a-zA-Z_][a-zA-Z0-9_]*(?=[(])"
+			"match": "[a-zA-Z_][a-zA-Z0-9_]* *(?=[(])"
 		},
 		"invalid": {
-			"patterns": [
-				{
-					"name": "invalid.illegal",
-					"match": "'"
-				}
-			]
+			"name": "invalid.illegal.firic",
+			"match": "'"
 		},
 		"keyword": {
 			"patterns": [
@@ -58,7 +54,7 @@
 			"end": "\"",
 			"patterns": [
 				{
-					"name": "constant.character.escape.firic ",
+					"name": "constant.character.escape.firic",
 					"match": "\\\\."
 				}
 			]
