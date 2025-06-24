@@ -1,22 +1,22 @@
 {
 	"icon": "images/icon.png",
 	"publisher": "",
-  "name": "firic",
-  "displayName": "Firic",
-  "description": "Language support for Firic",
-  "version": "0.1.0",
-  "engines": {"vscode": "^1.100.0"},
-  "categories": ["Programming Languages"],
-  "contributes": {
-    "languages": [
+	"name": "firic",
+	"displayName": "Firic",
+	"description": "Language support for Firic",
+	"version": "1.0.0",
+	"engines": {"vscode": "^1.100.0"},
+	"categories": ["Programming Languages"],
+	"contributes": {
+		"languages": [
 			{
 				"id": "firic",
 				"aliases": ["Firic"],
 				"extensions": [".fi"],
 				"configuration": "./language-configuration.json"
-    	}
+			}
 		],
-    "grammars": [
+		"grammars": [
 			{
 				"language": "firic",
 				"scopeName": "source.fi",
@@ -29,5 +29,5 @@
 				"path": "./snippets.json"
 			}
 		]
-  }
+	}
 }
