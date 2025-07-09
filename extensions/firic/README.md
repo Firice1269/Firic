@@ -448,6 +448,7 @@ Foo says "Hello, Bar."
 Magic methods are those which have an additional use to whatever functionality the user gives them. Firic currently supports the following magic methods:
 
 `__init`: initializer
+
 `__string`: tostring converter
 
 ## Using Firic
