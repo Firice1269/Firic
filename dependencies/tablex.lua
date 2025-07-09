@@ -12,6 +12,28 @@ function tablex.contains(self, element)
 end
 
 
+function tablex.copy(self, copy)
+	if type(self) ~= "table" then
+		return self
+	end
+
+	if copy ~= nil and copy[self] ~= nil then
+		return copy[self]
+	end
+
+	copy = copy or {}
+
+	local result = {}
+	copy[self]   = result
+
+	for k, v in next, self do
+		result[tablex.copy(k, copy)] = tablex.copy(v, copy)
+	end
+
+	return setmetatable(result, getmetatable(self))
+end
+
+
 function tablex.pop(self)
 	return table.remove(self, #self)
 end

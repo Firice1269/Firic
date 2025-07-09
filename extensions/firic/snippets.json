@@ -1,4 +1,16 @@
 {
+	"class": {
+		"prefix": ["class"],
+		"body": [
+			"class $1 {",
+			"\t$2",
+			"",
+			"\tfunc __init($3) {",
+			"\t\t$0",
+			"\t}",
+			"}"
+		]
+	},
 	"else": {
 		"prefix": ["else"],
 		"body": [

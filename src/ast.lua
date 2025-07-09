@@ -24,6 +24,7 @@ ast.NodeType = {
 
 	STATEMENT = {
 		BREAK    = "Break",
+		CLASS    = "ClassDefinition",
 		CONTINUE = "Continue",
 		LOOP     = "Loop",
 		IF       = "IfStatement",
@@ -55,6 +56,7 @@ ast.Number     = ast.NodeType.LITERAL.NUMBER
 ast.String     = ast.NodeType.LITERAL.STRING
 
 ast.Break               = ast.NodeType.STATEMENT.BREAK
+ast.ClassDefinition     = ast.NodeType.STATEMENT.CLASS
 ast.Continue            = ast.NodeType.STATEMENT.CONTINUE
 ast.Loop                = ast.NodeType.STATEMENT.LOOP
 ast.IfStatement         = ast.NodeType.STATEMENT.IF

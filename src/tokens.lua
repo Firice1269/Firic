@@ -26,6 +26,7 @@ tokens.TokenType = {
 	RUNTIME = {
 		ARRAY      = "array",
 		BOOLEAN    = "boolean",
+		CLASS      = "class",
 		DICTIONARY = "dictionary",
 		NULL       = "null",
 		NUMBER     = "number",
@@ -58,6 +59,7 @@ tokens.miscellaneousOperator = tokens.TokenType.OPERATOR.MISCELLANEOUS
 
 tokens.array          = tokens.TokenType.RUNTIME.ARRAY
 tokens.boolean        = tokens.TokenType.RUNTIME.BOOLEAN
+tokens.class          = tokens.TokenType.RUNTIME.CLASS
 tokens.dictionary     = tokens.TokenType.RUNTIME.DICTIONARY
 tokens.null           = tokens.TokenType.RUNTIME.NULL
 tokens.number         = tokens.TokenType.RUNTIME.NUMBER
@@ -66,10 +68,11 @@ tokens.nativeFunction = tokens.TokenType.RUNTIME.FUNCTION.NATIVE
 tokens.userFunction   = tokens.TokenType.RUNTIME.FUNCTION.USER
 
 
-function tokens.Token(type, value)
+function tokens.Token(type, value, class)
 	return {
 		type  = type,
-		value = value
+		value = value,
+		class = class,
 	}
 end
 

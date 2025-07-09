@@ -40,7 +40,9 @@ function parser.parseStatement(tokenizedCode)
 
 		shift(tokenizedCode)
 
-		return ast.Node(start,  ast.Break)
+		return ast.Node(start, ast.Break)
+	elseif token.value == "class" then
+		return parser.parseClassDefinition(tokenizedCode)
 	elseif token.value == "continue" then
 		shift(tokenizedCode)
 
@@ -57,7 +59,7 @@ function parser.parseStatement(tokenizedCode)
 
 		shift(tokenizedCode)
 
-		return ast.Node(start,  ast.Continue)
+		return ast.Node(start, ast.Continue)
 	elseif token.value == "func" then
 		shift(tokenizedCode)
 
@@ -101,6 +103,67 @@ function parser.parseStatement(tokenizedCode)
 	end
 
 	return parser.parseExpression(tokenizedCode)
+end
+
+
+function parser.parseClassDefinition(tokenizedCode)
+	local start = #newlines
+
+	shift(tokenizedCode)
+
+	local name = shift(tokenizedCode)
+
+	if name.type ~= tokens.identifier then
+		print(
+			"error while parsing class definition at line " .. start
+			.. ": expected identifier while parsing name, got '"
+			.. string.lower(name.type)
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	local token = shift(tokenizedCode)
+
+	if token.value ~= "{" then
+		print(
+			"error while parsing class definition at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	local body = {}
+
+	while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
+		tablex.push(body, parser.parseStatement(tokenizedCode))
+	end
+
+	token = shift(tokenizedCode)
+
+	if token.value ~= "}" then
+		print(
+			"error while parsing class definition at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	return ast.Node(
+		start,
+		ast.ClassDefinition,
+		{
+			name = name.value,
+			body = body,
+		}
+	)
 end
 
 
@@ -412,7 +475,7 @@ function parser.parseVariableDeclaration(tokenizedCode)
 			{
 				name     = name.value,
 				constant = constant,
-				value    = ast.Node(ast.Identifier, "null")
+				value    = ast.Node(nil, ast.Identifier, "null")
 			}
 		)
 	elseif token.value ~= "=" then
@@ -482,11 +545,11 @@ function parser.parseExpression(tokenizedCode, brackets)
 		end
 	end
 
-	return parser.parseVariableAssignment(tokenizedCode, brackets)
+	return parser.parseVariableAssignment(tokenizedCode)
 end
 
 
-function parser.parseVariableAssignment(tokenizedCode, brackets)
+function parser.parseVariableAssignment(tokenizedCode)
 	local left = parser.parseTernaryExpression(tokenizedCode)
 
 	if tokenizedCode[1].type == tokens.assignmentOperator then
@@ -497,7 +560,7 @@ function parser.parseVariableAssignment(tokenizedCode, brackets)
 
 		local token = shift(tokenizedCode)
 
-		if not (token.type == tokens.eol and not brackets) and token.value ~= ";" then
+		if token.type ~= tokens.eol and token.value ~= ";" then
 			print(
 				"error while parsing variable assignment at line " .. start
 				.. ": expected '\\n' or ';', got '"
@@ -868,11 +931,6 @@ function parser.parsePrimaryExpression(tokenizedCode)
 					}
 				)
 			end
-
-			if tokenizedCode[1].value == ";" then
-				shift(tokenizedCode)
-				return expression
-			end
 		end
 
 		while tokenizedCode[1].value == "[" do
@@ -910,6 +968,8 @@ function parser.parsePrimaryExpression(tokenizedCode)
 			ast.Number,
 			token.value
 		)
+	elseif token.value == ";" then
+		return parser.parseStatement(tokenizedCode)
 	elseif token.type ~= tokens.eol then
 		print(
 			"error while parsing expression at line " .. start
@@ -1103,8 +1163,6 @@ function parser.parse(sourceCode)
 		local statement = parser.parseStatement(tokenizedCode)
 		tablex.push(program.value, statement)
 	end
-
-	program.endLine = #newlines
 
 	return program
 end

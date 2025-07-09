@@ -37,7 +37,7 @@ let array = [
 	[1, 18, 18, 1, 25],
 ]
 
-print(array[-2])
+print(array[-2]);
 ```
 Output:
 ```lua
@@ -63,15 +63,15 @@ Example:
 ```swift
 let dict = {
 	null: "",
-	0:    "0",
-	1:    "1",
+	0:    "1",
+	1:    "0",
 }
 
-print(dict[1])
+print(dict[1]);
 ```
 Output:
 ```
-1
+0
 ```
 
 #### Nulls
@@ -90,9 +90,9 @@ Strings are values which represent a body of text, and are always enclosed in qu
 
 Example:
 ```swift
-print("\"Hello, world!\"\n")
+print("\"Hello, world!\"\n");
 
-print("Escape sequences always begin with a backslash (\\).")
+print("Escape sequences always begin with a backslash (\\).");
 ```
 Output:
 ```
@@ -195,7 +195,7 @@ The conditional operator (`?:`) takes in three arguments (in other words, it is 
 
 Example:
 ```lua
-print(1 + 1 == 2 ? false : true)
+print(1 + 1 == 2 ? false : true);
 ```
 Output:
 ```
@@ -204,31 +204,35 @@ false
 
 ### Variables
 
-Firic uses two different keywords for declaring variables: `let` and `var`. Variables declared with the `let` keyword are immutable, while those declared with the `var` keyword are mutable.
+Firic uses two different keywords for declaring variables: `let` and `var`. Variables declared with the `let` keyword are immutable, while those declared with the `var` keyword are mutable. If a variable assignment is done on an immutable variable, Firic will throw an error.
 
 Example:
 ```swift
-let x = 24 --immutable
-x     = 0  --error
+var x = 24
+x     = 1 
 
-var y = 25 --mutable
-y     = 0  --no error
+let y = -24
+y     = -1
+```
+Output:
+```
+error while evaluating variable assignment at line 5: 'y' is a constant
 ```
 
 ### If Statements
 
-In Firic, if statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise you will get an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
+In Firic, if statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise Firic will throw an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
 
 Example:
 ```swift
 let n = 81
 
 if n == 80 {
-	print("n is 80")
+	print("n is 80");
 } elseif n == 81 {
-	print("n is 81")
+	print("n is 81");
 } else {
-	print("n is not 80 or 81, n is " + n)
+	print("n is not 80 or 81, n is " + n);
 }
 ```
 Output:
@@ -265,7 +269,7 @@ let fibonacci = [
 ]
 
 for number in fibonacci {
-	print("F(" + fibonacci.find(number)[0] + ") = " + number)
+	print("F(" + fibonacci.find(number)[0] + ") = " + number);
 }
 ```
 Output:
@@ -287,7 +291,30 @@ F(12) = 144
 
 #### While Loops
 
+While loops must begin with the `while` keyword, followed by a condition. Then, the body of the loop follows (enclosed in braces). The loop will repeatedly execute every statement inside its body until its condition evaluates to `false`.
 
+Example:
+```swift
+var i = 1
+
+while i <= 10 {
+	print(i);
+	i += 1
+}
+```
+Output:
+```
+1
+2
+3
+4
+5
+6
+7
+8
+9
+10
+```
 
 ### Functions
 
@@ -313,15 +340,21 @@ func multiply(a, b) {
 
 	return result
 }
+
+print(multiply(3, 4));
+```
+Output:
+```
+12
 ```
 
 #### Built-In Functions
 
 All functions built into Firic are defined in Lua. The following is the full list of them, each with a description of what they do:
 
-The `copy` function takes in one argument (which must be an array or a dictionary) and returns a copy of it.
+The `copy` function takes in one argument (which must be an array, dictionary, or string) and returns a copy of it.
 
-The `len` function takes in one argument (which must be an array or a string) and returns its length.
+The `len` function takes in one argument (which must be an array or string) and returns its length.
 
 The `print` function takes in a variable number of arguments and prints all of them, separated by newlines.
 
@@ -330,6 +363,9 @@ The `randint` function takes in two arguments (which must both be numbers), the 
 The `range` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns an array containing every integer between the first and second arguments (inclusive), skipping over any integer that, when subtracted by the first argument, is not divisible by the third argument.
 
 The `type` function takes in one argument and returns its type as a string.
+
+
+The `array.__init` function takes in one argument, attempts to convert the argument to a string, and returns an array containing every character of that string.
 
 The `array.contains` function takes in one argument and returns `true` if the array contains the argument (or `false` if it doesn't contain the argument).
 
@@ -345,7 +381,13 @@ The `array.reverse` function takes in no arguments, reverses the order of the el
 
 The `array.sort` function takes in one argument (which must be a boolean), which is optional (defaults to `false`), sorts the array in ascending order (unless the argument is `true`, in which case the array would be sorted in descending order), and returns the resulting array.
 
-The `dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` if it doesn't contain the argument).
+
+The `boolean.__init` function takes in one argument and returns `true` if the argument is `"true"` or a non-zero number, or returns `false` if the argument is `"false"` or `0`.
+
+
+The `dictionary.__init` function takes in one argument and, if the argument is an array, for each even index in that array, stores the element at that index as a key inside a dictionary (which is returned when completed), and stores the following element as that key's value.
+
+The `dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` otherwise).
 
 The `dictionary.find` function takes in one argument and returns an array containing every key at which that value occurs in the dictionary.
 
@@ -356,6 +398,57 @@ The `dictionary.keys` function takes in no arguments and returns an array contai
 The `dictionary.remove` function takes in one argument, removes the value at the key equal to it from the dictionary, and returns the resulting dictionary.
 
 The `dictionary.values` function takes in no arguments and returns an array containing all of the values of the dictionary.
+
+
+The `number.__init` function takes in one argument and returns `1` if the argument is `true`, `0` if the argument is `false`, or a number from a string if the string is able to be parsed as a number.
+
+
+The `string.capitalize` function takes in no arguments, makes the first character of the string an uppercase letter (if possible), and returns the resulting string.
+
+The `string.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
+
+The `string.endswith` function takes in one argument and returns `true` if the string's last character is equal to the argument (or `false` otherwise).
+
+The `string.lower` function takes in no arguments, makes all characters of the string uppercase letters (if possible), and returns the resulting string.
+
+The `string.upper` function takes in no arguments, makes all characters of the string lowercase letters (if possible), and returns the resulting string.
+
+The `string.startswith` function takes in one argument and returns `true` if the string's first character is equal to the argument (or `false` otherwise).
+
+### Classes
+
+In Firic, classes can be defined by using the `class` keyword, followed by the class name, then its body (enclosed in braces). Any variables declared inside the body can be used as properties, and any functions defined inside the body can be used as methods. These can all be referenced by using dot notation. Note that the first parameter of any class method is reserved for the current class instance. Any example Firic code with classes will always call this parameter `self`, but it can have any name.
+
+Example:
+```swift
+class Person {
+	var name
+
+	func __init(self, name) {
+		self.name = name.lower().capitalize()
+	}
+
+
+	func greet(self, person) {
+		print(self.name + " says \"Hello, " + person.name +".\"")
+	}
+}
+
+let foo   = Person("foo")
+let bar = Person("bar")
+foo.greet(bar);
+```
+Output:
+```
+Foo says "Hello, Bar."
+```
+
+#### Magic Methods
+
+Magic methods are those which have an additional use to whatever functionality the user gives them. Firic currently supports the following magic methods:
+
+`__init`: initializer
+`__string`: tostring converter
 
 ## Using Firic
 
