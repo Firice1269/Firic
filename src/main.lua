@@ -29,13 +29,8 @@ local function run(file)
 
 	local contents = io.input():read("a")
 
-	local before = os.clock()
-
 	local program = parser.parse(contents)
 	interpreter.evaluate(program, scopes.global)
-
-	local after = os.clock()
-	print("\t", after - before)
 end
 
 
