@@ -264,7 +264,13 @@ function parser.parseEnum(tokenizedCode)
 
 	for i, v in ipairs(body) do
 		if v.type ~= ast.Identifier then
-			--error
+			print(
+				"error while parsing enum case at line " .. v.start
+				.. ": expected identifier, got "
+				.. string.lower(v.type)
+				.. " instead"
+			)
+
 			os.exit()
 		end
 
