@@ -1,6 +1,7 @@
 local interpreter = require("src.interpreter")
 local parser      = require("src.parser")
 local scopes      = require("src.scopes")
+local tablex      = require("dependencies.tablex")
 
 
 local function repl()
@@ -30,7 +31,7 @@ local function run(file)
 	local contents = io.input():read("a")
 
 	local program = parser.parse(contents)
-	interpreter.evaluate(program, scopes.global)
+	interpreter.evaluate(program, tablex.copy(scopes.global))
 end
 
 

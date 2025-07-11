@@ -21,7 +21,10 @@ local function checkArgumentTypes(left, operator, right, line)
 			os.exit()
 		end
 	elseif operator == "+" then
-		if (left.type ~= tokens.number or right.type ~= tokens.number) and (left.type ~= tokens.string and right.type ~= tokens.string) then
+		if
+			left.type ~= tokens.number and left.type ~= tokens.string
+			or right.type ~= tokens.string and right.type ~= tokens.number
+		then
 			print(
 				"error while evaluating binary expression at line " .. line
 				.. ": expected numbers or strings while evaluating arguments of binary operator '" .. operator .. "', got '"
@@ -130,7 +133,13 @@ end
 
 
 function interpreter.evaluateClassDefinition(statement, scope)
-	local class = scopes.Scope(scope)
+	local inherited = statement.value.inherited
+
+	if inherited ~= nil then
+		inherited = interpreter.evaluate(inherited, scope).class
+	end
+
+	local class = scopes.Scope(scope, tablex.copy(inherited))
 
 	for _, v in ipairs(statement.value.body) do
 		interpreter.evaluate(v, class)
@@ -160,7 +169,7 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 
 	local func = interpreter.evaluate(expression.value.call, scope)
 
-	scope.parent = parent
+	parent, scope.parent = scope.parent, parent
 
 	local arguments = {}
 
@@ -200,7 +209,7 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 			end
 		end
 
-		scope.parent = nil
+		scope.parent = parent
 
 		return value
 	end
@@ -242,6 +251,29 @@ function interpreter.evaluateDictionary(dictionary, scope)
 	end
 
 	return tokens.Token(tokens.dictionary, values, tablex.copy(scopes.dictionary))
+end
+
+
+function interpreter.evaluateEnum(statement, scope)
+	local class = scopes.Scope()
+
+	for _, v in ipairs(statement.value.body) do
+		scopes.declareVariable(
+			v,
+			tokens.Token(tokens.case, {v}),
+			true,
+			class,
+			statement.start
+		)
+	end
+
+	return scopes.declareVariable(
+		statement.value.name,
+		tokens.Token(tokens.enum, statement.value.name, class),
+		true,
+		scope,
+		statement.start
+	)
 end
 
 
@@ -321,8 +353,12 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			scope               = scopes.Scope(init.value.scope)
 			scope.parent.parent = parent
 
-			local instance = tokens.Token(expression.value.call.value, nil, tablex.copy(func.class))
+			local instance = tokens.Token(expression.value.call.value, {}, tablex.copy(func.class))
 			instance.class.parent = nil
+
+			if instance.class.inherited ~= nil then
+				instance.class.inherited.parent = nil
+			end
 
 			table.insert(arguments, 1, instance)
 
@@ -524,7 +560,6 @@ function interpreter.evaluateMemberExpression(expression, scope)
 
 		return interpreter.evaluate(member, scope)
 	elseif member.type == ast.Identifier then
-		scope.parent = nil
 		return interpreter.evaluateIdentifier(member, scope)
 	elseif member.type == ast.FunctionCall then
 		table.insert(member.value.arguments, 1, object)
@@ -847,6 +882,8 @@ function interpreter.evaluate(astNode, scope)
 		return interpreter.evaluateClassDefinition(astNode, scope)
 	elseif astNode.type == ast.Dictionary then
 		return interpreter.evaluateDictionary(astNode, scope)
+	elseif astNode.type == ast.Enum then
+		return interpreter.evaluateEnum(astNode, scope)
 	elseif astNode.type == ast.Function then
 		return interpreter.evaluateFunction(astNode, scope)
 	elseif astNode.type == ast.FunctionCall then

@@ -17,7 +17,7 @@ Example:
 
 ### Data Types
 
-There are 7 basic types in Firic: `array`, `bool` (short for "boolean"), `dict` (short for "dictionary"), `null`, `num` (short for "number"), `str` (short for "string"), and `func` (short for "function").
+Firic supports 10 basic types: `array`, `bool` (short for "boolean"), `case`, `class`, `dict` (short for "dictionary"), `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `func` (short for "function").
 
 #### Arrays
 
@@ -51,6 +51,14 @@ Output:
 
 Booleans are values which can be either `true` or `false`.
 
+#### Cases
+
+See [Enums](#enums-1) below.
+
+#### Classes
+
+See [Classes](#classes-1) below.
+
 #### Dictionaries
 
 Dictionaries are objects which contain other objects, like arrays. However, unlike arrays, dictionaries do not store values with ordered numeric indices. Instead, they store values in keys, which can be of any data type (including arrays and dictionaries) and are defined by the user.
@@ -73,6 +81,10 @@ Output:
 ```
 0
 ```
+
+#### Enums
+
+See [Enums](#enums-1) below.
 
 #### Nulls
 
@@ -221,7 +233,7 @@ error while evaluating variable assignment at line 5: 'y' is a constant
 
 ### If Statements
 
-In Firic, if statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise Firic will throw an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
+If statements are first initiated with the `if` keyword, followed by a condition (that must evaluate to a boolean value, otherwise Firic will throw an error). Then, the body of the if statement is enclosed in braces. The `elseif` and `else` keywords can be used after that for...well, guess.
 
 Example:
 ```swift
@@ -268,8 +280,8 @@ let fibonacci = [
 	144,
 ]
 
-for number in fibonacci {
-	print("F(" + fibonacci.find(number)[0] + ") = " + number);
+for i in fibonacci {
+	print("F(" + fibonacci.find(i)[0] + ") = " + i);
 }
 ```
 Output:
@@ -318,7 +330,7 @@ Output:
 
 ### Functions
 
-Firic functions are called by the function's name, followed by any arguments to be passed to the function, enclosed in parentheses (`()`).
+Functions can be called by the function's name, followed by any arguments to be passed to the function, enclosed in parentheses (`()`).
 
 Example:
 ```lua
@@ -362,7 +374,7 @@ The `randint` function takes in two arguments (which must both be numbers), the 
 
 The `range` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns an array containing every integer between the first and second arguments (inclusive), skipping over any integer that, when subtracted by the first argument, is not divisible by the third argument.
 
-The `type` function takes in one argument and returns its type as a string.
+The `typeof` function takes in one argument and returns its type as a string.
 
 
 The `array.__init` function takes in one argument, attempts to convert the argument to a string, and returns an array containing every character of that string.
@@ -403,7 +415,7 @@ The `dictionary.values` function takes in no arguments and returns an array cont
 The `number.__init` function takes in one argument and returns `1` if the argument is `true`, `0` if the argument is `false`, or a number from a string if the string is able to be parsed as a number.
 
 
-The `string.capitalize` function takes in no arguments, makes the first character of the string an uppercase letter (if possible), and returns the resulting string.
+The `string.capitalize` function takes in no arguments, makes the first character of each substring (separated by spaces) in the string an uppercase letter (if possible), and returns the resulting string.
 
 The `string.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
 
@@ -417,7 +429,7 @@ The `string.startswith` function takes in one argument and returns `true` if the
 
 ### Classes
 
-In Firic, classes can be defined by using the `class` keyword, followed by the class name, then its body (enclosed in braces). Any variables declared inside the body can be used as properties, and any functions defined inside the body can be used as methods. These can all be referenced by using dot notation. Note that the first parameter of any class method is reserved for the current class instance. Any example Firic code with classes will always call this parameter `self`, but it can have any name.
+Classes can be defined by the `class` keyword, followed by the class's name, then its body (enclosed in braces). Any variables declared inside the body can be used as properties, and any functions defined inside the body can be used as methods. A class's traits can all be referenced by using dot notation. Note that the first parameter of any class method is reserved for the current class instance. Any example Firic code with classes will always call this parameter `self`, but it can have any name.
 
 Example:
 ```swift
@@ -430,17 +442,62 @@ class Person {
 
 
 	func greet(self, person) {
-		print(self.name + " says \"Hello, " + person.name +".\"")
+		print(self.name + " says \"Hello, " + person.name +".\"");
 	}
 }
 
-let foo   = Person("foo")
+let foo = Person("foo")
 let bar = Person("bar")
 foo.greet(bar);
 ```
 Output:
 ```
 Foo says "Hello, Bar."
+```
+
+#### Inheritance
+
+Classes can inherit traits from other classes. To do this, define a class, but place a less-than sign (`<`) followed by another class's name before the body. This will allow the class being defined to use all methods and properties from the inherited class.
+
+Example:
+```swift
+class Animal {
+	var type
+	var name
+}
+
+
+class Cat < Animal {
+	type = "Feline"
+
+	func __init(self, name) {
+		self.name = name.lower().capitalize()
+	}
+}
+
+class Dog < Animal {
+	type = "Canine"
+
+	func __init(self, name) {
+		self.name = name.lower().capitalize()
+	}
+}
+
+
+let cat = Cat("tacocat")
+let dog = Dog("dog god")
+
+print(cat.name, cat.type);
+print();
+print(dog.name, dog.type);
+```
+Output:
+```
+Tacocat
+Feline
+
+Dog God
+Canine
 ```
 
 #### Magic Methods
@@ -450,6 +507,58 @@ Magic methods are those which have an additional use to whatever functionality t
 `__init`: initializer
 
 `__string`: tostring converter
+
+### Enums
+
+Enums can be defined using the `enum` keyword, followed by the enum's name, then its body (enclosed in braces). An enum's body should contain a list of comma-separated values, like an array, except these values are called cases, and can be referenced like class traits (using dot notation).
+
+Example:
+```swift
+enum AnimalType {
+	Feline,
+	Canine,
+}
+
+
+
+class Animal {
+	var type
+	var name
+}
+
+
+class Cat < Animal {
+	type = AnimalType.Feline
+
+	func __init(self, name) {
+		self.name = name.lower().capitalize()
+	}
+}
+
+class Dog < Animal {
+	type = AnimalType.Canine
+
+	func __init(self, name) {
+		self.name = name.lower().capitalize()
+	}
+}
+
+
+let cat = Cat("tacocat")
+let dog = Dog("dog god")
+
+print(cat.name, cat.type);
+print();
+print(dog.name, dog.type);
+```
+Output:
+```
+Tacocat
+Feline
+
+Dog God
+Canine
+```
 
 ## Using Firic
 

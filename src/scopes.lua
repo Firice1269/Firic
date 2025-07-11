@@ -4,13 +4,14 @@ local tokens = require("src.tokens")
 local scopes = {}
 
 
-function scopes.Scope(parent, constants, variables)
+function scopes.Scope(parent, inherited, constants, variables)
 	constants = constants or {}
 	variables = variables or {}
 
 
 	return {
 		parent    = parent,
+		inherited = inherited,
 		constants = constants,
 		variables = variables,
 	}
@@ -22,17 +23,17 @@ function scopes.findVariable(name, scope, line)
 		return scope
 	end
 
-	if scope.parent == nil then
+	if scope.parent == nil and scope.inherited == nil then
 		print("error on line " .. line .. ": cannot find '" .. name .. "' in scope")
 		os.exit()
 	end
 
-	return scopes.findVariable(name, scope.parent, line)
+	return scopes.findVariable(name, scope.inherited or scope.parent, line)
 end
 
 
 function scopes.declareVariable(name, value, constant, scope, line)
-	if scope.variables[name] ~= nil then
+	if scope.variables[name] ~= nil or scopes.global.variables[name] ~= nil then
 		print("error on line " .. line .. ": '" .. name .. "' is already defined")
 		os.exit()
 	end
@@ -146,6 +147,7 @@ end
 
 scopes.global = scopes.Scope(
 	nil,
+	nil,
 	{
 		--FUNCTIONS
 		copy        = {},
@@ -153,7 +155,7 @@ scopes.global = scopes.Scope(
 		print       = {},
 		randint     = {},
 		range       = {},
-		type        = {},
+		typeof      = {},
 		--FUNCTIONS
 
 		--VARIABLES
@@ -270,8 +272,12 @@ scopes.global = scopes.Scope(
 						end
 					elseif argument.type == tokens.array or argument.type == tokens.dictionary then
 						print(repr(argument))
+					elseif argument.type == tokens.case then
+						print(argument.value[1])
 					elseif argument.type == tokens.class then
 						print("class '" .. argument.value .. "'")
+					elseif argument.type == tokens.enum then
+						print("enum '" .. argument.value .. "'")
 					elseif argument.type == tokens.boolean or argument.type == tokens.null or argument.type == tokens.number then
 						print(argument.value)
 					else
@@ -414,7 +420,7 @@ scopes.global = scopes.Scope(
 		end),
 
 
-		type = tokens.Token(tokens.nativeFunction, function (arguments, line)
+		typeof = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments ~= 1 then
 				print(
 					"error while evaluating function 'type' at line " .. line
@@ -454,11 +460,10 @@ scopes.global = scopes.Scope(
 	}
 )
 
-local copy = tablex.copy(scopes.global)
-
 
 scopes.array = scopes.Scope(
-	copy,
+	nil,
+	nil,
 	{
 		__init      = {},
 		contains    = {},
@@ -714,7 +719,8 @@ scopes.array = scopes.Scope(
 )
 
 scopes.boolean = scopes.Scope(
-	copy,
+	nil,
+	nil,
 	{
 		__init = {}
 	},
@@ -747,7 +753,8 @@ scopes.boolean = scopes.Scope(
 )
 
 scopes.dictionary = scopes.Scope(
-	copy,
+	nil,
+	nil,
 	{
 		__init   = {},
 		contains = {},
@@ -942,7 +949,8 @@ scopes.dictionary = scopes.Scope(
 )
 
 scopes.number = scopes.Scope(
-	copy,
+	nil,
+	nil,
 	{
 		__init = {},
 	},
@@ -987,7 +995,8 @@ scopes.number = scopes.Scope(
 )
 
 scopes.string = scopes.Scope(
-	copy,
+	nil,
+	nil,
 	{
 		__init       = {},
 		capitalize   = {},
@@ -1044,11 +1053,27 @@ scopes.string = scopes.Scope(
 				os.exit()
 			end
 
-			arguments[1].value = "\""
-			.. string.upper(
-				string.sub(arguments[1].value, 2, 2)
-			)
-			.. string.sub(arguments[1].value, 3, #arguments[1].value)
+			local str = {}
+
+			for character in string.gmatch(arguments[1].value, ".") do
+				tablex.push(str, character)
+			end
+
+			local indices = {2}
+
+			for i, v in ipairs(str) do
+				if v == " " and i ~= #str - 1 then
+					tablex.push(indices, i + 1)
+				end
+			end
+
+			for _, v in ipairs(indices) do
+				arguments[1].value = string.sub(arguments[1].value, 1, v - 1)
+				.. string.upper(
+					string.sub(arguments[1].value, v, v)
+				)
+				.. string.sub(arguments[1].value, v + 1, #arguments[1].value)
+			end
 
 			return arguments[1]
 		end),

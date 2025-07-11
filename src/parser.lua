@@ -60,6 +60,8 @@ function parser.parseStatement(tokenizedCode)
 		shift(tokenizedCode)
 
 		return ast.Node(start, ast.Continue)
+	elseif token.value == "enum" then
+		return parser.parseEnum(tokenizedCode)
 	elseif token.value == "func" then
 		shift(tokenizedCode)
 
@@ -124,6 +126,34 @@ function parser.parseClassDefinition(tokenizedCode)
 		os.exit()
 	end
 
+	local inherited
+
+	if tokenizedCode[1].value == "<" then
+		shift(tokenizedCode)
+
+		inherited = parser.parseExpression(tokenizedCode)
+
+		if inherited.type ~= ast.Identifier then
+			print(
+				"error while parsing class definition at line " .. start
+				.. ": expected identifier while parsing inherited class, got "
+				.. string.lower(inherited.type)
+				.. " instead"
+			)
+
+			os.exit()
+		end
+	elseif tokenizedCode[1].value ~= "{" then
+		print(
+			"error while parsing class definition at line " .. start
+			.. ": expected '{' or '<', got '"
+			.. tokenizedCode[1].value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
 	local token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
@@ -159,6 +189,91 @@ function parser.parseClassDefinition(tokenizedCode)
 	return ast.Node(
 		start,
 		ast.ClassDefinition,
+		{
+			name      = name.value,
+			body      = body,
+			inherited = inherited,
+		}
+	)
+end
+
+
+function parser.parseEnum(tokenizedCode)
+	local start = #newlines
+
+	shift(tokenizedCode)
+
+	local name = shift(tokenizedCode)
+
+	if name.type ~= tokens.identifier then
+		print(
+			"error while parsing enum at line " .. start
+			.. ": expected identifier while parsing name, got '"
+			.. string.lower(name.type)
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	local token = shift(tokenizedCode)
+
+	if token.value ~= "{" then
+		print(
+			"error while parsing enum at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
+	end
+
+	local body = {}
+
+	if tokenizedCode[1].value ~= "}" then
+		tablex.push(body, parser.parseExpression(tokenizedCode, true))
+
+		while tokenizedCode[1].value == "," do
+			shift(tokenizedCode)
+
+			if tokenizedCode[1].value == "}" then
+				break
+			end
+
+			tablex.push(body, parser.parseExpression(tokenizedCode, true))
+		end
+	end
+
+	token = shift(tokenizedCode)
+
+	if token.value ~= "}" then
+		print(
+			"error while parsing enum at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	for i, v in ipairs(body) do
+		if v.type ~= ast.Identifier then
+			--error
+			os.exit()
+		end
+
+		body[i] = v.value
+	end
+
+	return ast.Node(
+		start,
+		ast.Enum,
 		{
 			name = name.value,
 			body = body,
