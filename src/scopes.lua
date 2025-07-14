@@ -4,9 +4,10 @@ local tokens = require("src.tokens")
 local scopes = {}
 
 
-function scopes.Scope(parent, inherited, constants, variables)
+function scopes.Scope(parent, inherited, constants, variables, types)
 	constants = constants or {}
 	variables = variables or {}
+	types     = types     or {}
 
 
 	return {
@@ -14,6 +15,7 @@ function scopes.Scope(parent, inherited, constants, variables)
 		inherited = inherited,
 		constants = constants,
 		variables = variables,
+		types     = types,
 	}
 end
 
@@ -32,12 +34,13 @@ function scopes.findVariable(name, scope, line)
 end
 
 
-function scopes.declareVariable(name, value, constant, scope, line)
+function scopes.declareVariable(name, types, value, constant, scope, line)
 	if scope.variables[name] ~= nil or scopes.global.variables[name] ~= nil then
 		print("error on line " .. line .. ": '" .. name .. "' is already defined")
 		os.exit()
 	end
 
+	scope.types[name]     = types
 	scope.variables[name] = value
 
 	if constant then
@@ -87,6 +90,8 @@ local function repr(structure, indentation)
 		if structure.type == tokens.dictionary then
 			if v.key.type == tokens.array or v.key.type == tokens.dictionary then
 				text = text .. repr(v.key, indentation + 1)
+			elseif v.key.type == tokens.string then
+				text = text .. v.key.value
 			else
 				text = text .. tostring(v.key.value)
 			end
@@ -150,8 +155,6 @@ scopes.global = scopes.Scope(
 	nil,
 	{
 		--FUNCTIONS
-		copy        = {},
-		len         = {},
 		print       = {},
 		randint     = {},
 		range       = {},
@@ -166,72 +169,6 @@ scopes.global = scopes.Scope(
 	},
 	{
 		--FUNCTIONS
-		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
-				print(
-					"error while evaluating function 'copy' at line " .. line
-					.. ": expected 1 argument, got "
-					.. #arguments
-					.. " instead"
-				)
-
-				os.exit()
-			end
-
-			if arguments[1].type ~= tokens.array and arguments[1].type ~= tokens.dictionary and arguments[1].type ~= tokens.string then
-				print(
-					"error while evaluating function 'copy' at line " .. line
-					.. ": expected array, dictionary, or string while evaluating argument #1, got '"
-					.. string.lower(string.sub(arguments[1].type, 1, 1)) .. string.sub(arguments[1].type, 2, #arguments[1].type)
-					.. "' instead"
-				)
-
-				os.exit()
-			end
-
-			return tablex.copy(arguments[1])
-		end),
-
-
-		len = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
-				print(
-					"error while evaluating function 'len' at line " .. line
-					.. ": expected 1 argument, got "
-					.. #arguments
-					.. " instead"
-				)
-
-				os.exit()
-			end
-
-			if arguments[1].type == tokens.array then
-				return tokens.Token(tokens.number, #arguments[1].value, tablex.copy(scopes.number))
-			elseif arguments[1].type == tokens.string then
-				return tokens.Token(
-					tokens.number,
-					string.len(
-						string.sub(
-							arguments[1].value,
-							2,
-							#arguments[1].value - 1
-						)
-					),
-					tablex.copy(scopes.number)
-				)
-			else
-				print(
-					"error while evaluating function 'len' at line " .. line
-					.. ": expected array or string while evaluating argument #1, got '"
-					.. string.lower(string.sub(arguments[1].type, 1, 1)) .. string.sub(arguments[1].type, 2, #arguments[1].type)
-					.. "' instead"
-				)
-
-				os.exit()
-			end
-		end),
-
-
 		print = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments == 0 then
 				print()
@@ -246,11 +183,11 @@ scopes.global = scopes.Scope(
 					elseif argument.type == tokens.nativeFunction then
 						local scope = {
 							scopes.global,
-							scopes.array,
-							scopes.boolean,
-							scopes.dictionary,
-							scopes.number,
-							scopes.string,
+							scopes.Array,
+							scopes.bool,
+							scopes.Dictionary,
+							scopes.num,
+							scopes.str,
 						}
 
 						local name
@@ -273,13 +210,15 @@ scopes.global = scopes.Scope(
 					elseif argument.type == tokens.array or argument.type == tokens.dictionary then
 						print(repr(argument))
 					elseif argument.type == tokens.case then
-						print(argument.value[1])
+						print(argument.type .. "." .. argument.value[1])
 					elseif argument.type == tokens.class then
 						print("class '" .. argument.value .. "'")
 					elseif argument.type == tokens.enum then
 						print("enum '" .. argument.value .. "'")
 					elseif argument.type == tokens.boolean or argument.type == tokens.null or argument.type == tokens.number then
 						print(argument.value)
+					elseif type(argument.value) == "table" then
+						print(argument.value[1])
 					else
 						print("instance of class '" .. argument.type .. "'")
 					end
@@ -304,7 +243,7 @@ scopes.global = scopes.Scope(
 			local max
 
 			if arguments[2] == nil then
-				min = tokens.Token(tokens.number, 1, tablex.copy(scopes.number))
+				min = tokens.Token(tokens.number, 1, scopes.num)
 				max = arguments[1]
 			else
 				min = arguments[1]
@@ -334,7 +273,7 @@ scopes.global = scopes.Scope(
 			end
 
 			if max.value < min.value then
-				return tokens.Token(tokens.number, min.value, tablex.copy(scopes.number))
+				return tokens.Token(tokens.number, min.value, scopes.num)
 			end
 
 			return tokens.Token(
@@ -361,13 +300,13 @@ scopes.global = scopes.Scope(
 			local step
 
 			if arguments[2] == nil then
-				min  = tokens.Token(tokens.number, 1, tablex.copy(scopes.number))
+				min  = tokens.Token(tokens.number, 1, scopes.num)
 				max  = arguments[1]
-				step = tokens.Token(tokens.number, 1, tablex.copy(scopes.number))
+				step = tokens.Token(tokens.number, 1, scopes.num)
 			elseif arguments[3] == nil then
 				min  = arguments[1]
 				max  = arguments[2]
-				step = tokens.Token(tokens.number, 1, tablex.copy(scopes.number))
+				step = tokens.Token(tokens.number, 1, scopes.num)
 			else
 				min  = arguments[1]
 				max  = arguments[2]
@@ -412,11 +351,11 @@ scopes.global = scopes.Scope(
 			for i = min.value, max.value, step.value do
 				tablex.push(
 					range,
-					tokens.Token(tokens.number, i, tablex.copy(scopes.number))
+					tokens.Token(tokens.number, i, scopes.num)
 				)
 			end
 
-			return tokens.Token(tokens.array, range, tablex.copy(scopes.array))
+			return tokens.Token(tokens.array, range, scopes.Array)
 		end),
 
 
@@ -432,43 +371,33 @@ scopes.global = scopes.Scope(
 				os.exit()
 			end
 
-			if arguments[1].type == tokens.array then
-				return tokens.Token(tokens.string, "\"array\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.boolean then
-				return tokens.Token(tokens.string, "\"bool\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.dictionary then
-				return tokens.Token(tokens.string, "\"dict\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.null then
-				return tokens.Token(tokens.string, "\"null\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.number then
-				return tokens.Token(tokens.string, "\"num\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.string then
-				return tokens.Token(tokens.string, "\"str\"", tablex.copy(scopes.string))
-			elseif arguments[1].type == tokens.nativeFunction or arguments[1].type == tokens.userFunction then
-				return tokens.Token(tokens.string, "\"func\"", tablex.copy(scopes.string))
+			if arguments[1].type == tokens.nativeFunction or arguments[1].type == tokens.userFunction then
+				return tokens.Token(tokens.string, "\"function\"", scopes.str)
 			else
-				return tokens.Token(tokens.string, "\"" .. arguments[1].type .. "\"", tablex.copy(scopes.string))
+				return tokens.Token(tokens.string, "\"" .. string.lower(arguments[1].type) .. "\"", scopes.str)
 			end
 		end),
 		--FUNCTIONS
 
 		--VARIABLES
-		["true"]  = tokens.Token(tokens.boolean, true, tablex.copy(scopes.boolean)),
-		["false"] = tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean)),
+		["true"]  = tokens.Token(tokens.boolean, true, scopes.bool),
+		["false"] = tokens.Token(tokens.boolean, false, scopes.bool),
 		null      = tokens.Token(tokens.null, "null"),
 		--VARIABLES
 	}
 )
 
 
-scopes.array = scopes.Scope(
+scopes.Array = scopes.Scope(
 	nil,
 	nil,
 	{
 		__init      = {},
 		contains    = {},
+		copy        = {},
 		find        = {},
 		insert      = {},
+		length      = {},
 		randelement = {},
 		remove      = {},
 		reverse     = {},
@@ -476,15 +405,19 @@ scopes.array = scopes.Scope(
 	},
 	{
 		__init = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
+			if #arguments > 1 then
 				print(
-					"error while evaluating function 'array.__init' at line " .. line
-					.. ": expected 1 argument, got "
+					"error while evaluating function 'Array.__init' at line " .. line
+					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
 				)
 
 				os.exit()
+			end
+
+			if #arguments == 0 then
+				return tokens.Token(tokens.array, {}, scopes.Array)
 			end
 
 			local str = arguments[1]
@@ -495,12 +428,12 @@ scopes.array = scopes.Scope(
 				str = tostring(arguments[1].value)
 			end
 
-			local self = tokens.Token(tokens.array, {}, tablex.copy(scopes.array))
+			local self = tokens.Token(tokens.array, {}, scopes.Array)
 
 			for character in str.gmatch(str, ".") do
 				tablex.push(
 					self.value,
-					tokens.Token(tokens.string, character, tablex.copy(scopes.string))
+					tokens.Token(tokens.string, "\"" .. character .. "\"", scopes.str)
 				)
 			end
 
@@ -511,7 +444,7 @@ scopes.array = scopes.Scope(
 		contains = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'array.contains' at line " .. line
+					"error while evaluating function 'Array.contains' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -522,18 +455,34 @@ scopes.array = scopes.Scope(
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value == arguments[2].value then
-					return tokens.Token(tokens.boolean, true, tablex.copy(scopes.boolean))
+					return tokens.Token(tokens.boolean, true, scopes.bool)
 				end
 			end
 
-			return tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+			return tokens.Token(tokens.boolean, false, scopes.bool)
+		end),
+
+
+		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'Array.copy' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tablex.copy(arguments[1])
 		end),
 
 
 		find = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'array.find' at line " .. line
+					"error while evaluating function 'Array.find' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -542,13 +491,13 @@ scopes.array = scopes.Scope(
 				os.exit()
 			end
 
-			local indices = tokens.Token(tokens.array, {}, tablex.copy(scopes.array))
+			local indices = tokens.Token(tokens.array, {}, scopes.Array)
 
 			for i, v in ipairs(arguments[1].value) do
 				if v.value == arguments[2].value then
 					tablex.push(
 						indices.value,
-						tokens.Token(tokens.number, i - 1, tablex.copy(scopes.number))
+						tokens.Token(tokens.number, i - 1, scopes.num)
 					)
 				end
 			end
@@ -560,7 +509,7 @@ scopes.array = scopes.Scope(
 		insert = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 < 1 or #arguments - 1 > 2 then
 				print(
-					"error while evaluating function 'array.insert' at line " .. line
+					"error while evaluating function 'Array.insert' at line " .. line
 					.. ": expected 1-2 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -574,7 +523,7 @@ scopes.array = scopes.Scope(
 			else
 				if arguments[3].type ~= tokens.number then
 					print(
-					"error while evaluating function 'array.insert' at line " .. line
+					"error while evaluating function 'Array.insert' at line " .. line
 					.. ": expected number while evaluating argument #2, got '"
 					.. string.lower(string.sub(arguments[3].type, 1, 1)) .. string.sub(arguments[3].type, 2, #arguments[3].type)
 					.. "' instead"
@@ -594,10 +543,26 @@ scopes.array = scopes.Scope(
 		end),
 
 
+		length = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'Array.length' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
+		end),
+
+
 		randelement = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'array.randelement' at line " .. line
+					"error while evaluating function 'Array.randelement' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -613,7 +578,7 @@ scopes.array = scopes.Scope(
 		remove = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'array.remove' at line " .. line
+					"error while evaluating function 'Array.remove' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -624,7 +589,7 @@ scopes.array = scopes.Scope(
 
 			if arguments[2].type ~= tokens.number then
 				print(
-					"error while evaluating function 'array.remove' at line " .. line
+					"error while evaluating function 'Array.remove' at line " .. line
 					.. ": expected number while evaluating argument #1, got '"
 					.. string.lower(string.sub(arguments[2].type, 1, 1)) .. string.sub(arguments[2].type, 2, #arguments[2].type)
 					.. "' instead"
@@ -646,7 +611,7 @@ scopes.array = scopes.Scope(
 		reverse = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'array.reverse' at line " .. line
+					"error while evaluating function 'Array.reverse' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -669,7 +634,7 @@ scopes.array = scopes.Scope(
 		sort = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 > 1 then
 				print(
-					"error while evaluating function 'array.sort' at line " .. line
+					"error while evaluating function 'Array.sort' at line " .. line
 					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -678,7 +643,7 @@ scopes.array = scopes.Scope(
 				os.exit()
 			end
 
-			local descending = tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+			local descending = tokens.Token(tokens.boolean, false, scopes.bool)
 
 			if arguments[2] ~= nil then
 				descending = arguments[2]
@@ -718,7 +683,7 @@ scopes.array = scopes.Scope(
 	}
 )
 
-scopes.boolean = scopes.Scope(
+scopes.bool = scopes.Scope(
 	nil,
 	nil,
 	{
@@ -726,10 +691,10 @@ scopes.boolean = scopes.Scope(
 	},
 	{
 		__init = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
+			if #arguments > 1 then
 				print(
 					"error while evaluating function 'boolean.__init' at line " .. line
-					.. ": expected 1 argument, got "
+					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
 				)
@@ -737,14 +702,18 @@ scopes.boolean = scopes.Scope(
 				os.exit()
 			end
 
+			if #arguments == 0 then
+				return tokens.Token(tokens.boolean, false, scopes.bool)
+			end
+
 			local bool
 
 			if arguments[1].type == tokens.null then
-				bool = tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+				bool = tokens.Token(tokens.boolean, false, scopes.bool)
 			elseif arguments[1].type == tokens.number then
-				bool = tokens.Token(tokens.boolean, arguments[1].value ~= 0, tablex.copy(scopes.boolean))
+				bool = tokens.Token(tokens.boolean, arguments[1].value ~= 0, scopes.bool)
 			elseif arguments[1].type == tokens.string then
-				bool = tokens.Token(tokens.boolean, arguments[1].value == "\"true\"", tablex.copy(scopes.boolean))
+				bool = tokens.Token(tokens.boolean, arguments[1].value == "\"true\"", scopes.bool)
 			end
 
 			return bool
@@ -752,24 +721,26 @@ scopes.boolean = scopes.Scope(
 	}
 )
 
-scopes.dictionary = scopes.Scope(
+scopes.Dictionary = scopes.Scope(
 	nil,
 	nil,
 	{
 		__init   = {},
 		contains = {},
+		copy     = {},
 		find     = {},
 		insert   = {},
 		keys     = {},
+		length   = {},
 		remove   = {},
 		values   = {},
 	},
 	{
 		__init = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
+			if #arguments > 1 then
 				print(
-					"error while evaluating function 'dictionary.__init' at line " .. line
-					.. ": expected 1 argument, got "
+					"error while evaluating function 'Dictionary.__init' at line " .. line
+					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
 				)
@@ -777,10 +748,14 @@ scopes.dictionary = scopes.Scope(
 				os.exit()
 			end
 
+			if #arguments == 0 then
+				return tokens.Token(tokens.dictionary, {}, scopes.Dictionary)
+			end
+
 			local dict
 
 			if arguments[1].type == tokens.array then
-				dict = tokens.Token(tokens.dictionary, {}, tablex.copy(scopes.dictionary))
+				dict = tokens.Token(tokens.dictionary, {}, scopes.Dictionary)
 
 				local value = {}
 
@@ -807,7 +782,7 @@ scopes.dictionary = scopes.Scope(
 		contains = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'dictionary.contains' at line " .. line
+					"error while evaluating function 'Dictionary.contains' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -818,18 +793,34 @@ scopes.dictionary = scopes.Scope(
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value.value == arguments[2].value then
-					return tokens.Token(tokens.boolean, true, tablex.copy(scopes.boolean))
+					return tokens.Token(tokens.boolean, true, scopes.bool)
 				end
 			end
 
-			return tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+			return tokens.Token(tokens.boolean, false, scopes.bool)
+		end),
+
+
+		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'Dictionary.copy' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tablex.copy(arguments[1])
 		end),
 
 
 		find = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'dictionary.find' at line " .. line
+					"error while evaluating function 'Dictionary.find' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -838,7 +829,7 @@ scopes.dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local keys = tokens.Token(tokens.array, {}, tablex.copy(scopes.array))
+			local keys = tokens.Token(tokens.array, {}, scopes.Array)
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value.value == arguments[2].value then
@@ -853,7 +844,7 @@ scopes.dictionary = scopes.Scope(
 		insert = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 2 then
 				print(
-					"error while evaluating function 'dictionary.insert' at line " .. line
+					"error while evaluating function 'Dictionary.insert' at line " .. line
 					.. ": expected 2 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -884,7 +875,7 @@ scopes.dictionary = scopes.Scope(
 		keys = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'dictionary.keys' at line " .. line
+					"error while evaluating function 'Dictionary.keys' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -893,7 +884,7 @@ scopes.dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local keys = tokens.Token(tokens.array, {}, tablex.copy(scopes.array))
+			local keys = tokens.Token(tokens.array, {}, scopes.Array)
 
 			for _, v in ipairs(arguments[1].value) do
 				tablex.push(keys.value, v.key)
@@ -903,10 +894,26 @@ scopes.dictionary = scopes.Scope(
 		end),
 
 
+		length = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'Array.length' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
+		end),
+
+
 		remove = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'dictionary.remove' at line " .. line
+					"error while evaluating function 'Dictionary.remove' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -928,7 +935,7 @@ scopes.dictionary = scopes.Scope(
 		values = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'dictionary.values' at line " .. line
+					"error while evaluating function 'Dictionary.values' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -937,7 +944,7 @@ scopes.dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local values = tokens.Token(tokens.array, {}, tablex.copy(scopes.array))
+			local values = tokens.Token(tokens.array, {}, scopes.Array)
 
 			for _, v in ipairs(arguments[1].value) do
 				tablex.push(values.value, v.value)
@@ -948,7 +955,7 @@ scopes.dictionary = scopes.Scope(
 	}
 )
 
-scopes.number = scopes.Scope(
+scopes.num = scopes.Scope(
 	nil,
 	nil,
 	{
@@ -956,15 +963,19 @@ scopes.number = scopes.Scope(
 	},
 	{
 		__init = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
+			if #arguments > 1 then
 				print(
-					"error while evaluating function 'number.__init' at line " .. line
-					.. ": expected 1 argument, got "
+					"error while evaluating function 'num.__init' at line " .. line
+					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
 				)
 
 				os.exit()
+			end
+
+			if #arguments == 0 then
+				return tokens.Token(tokens.number, 0, scopes.num)
 			end
 
 			local num
@@ -979,14 +990,18 @@ scopes.number = scopes.Scope(
 							#arguments[1].value - 1
 						)
 					),
-					tablex.copy(scopes.number)
+					scopes.num
 				)
+
+				if num.value == nil then
+					return nil
+				end
 			elseif arguments[1].value == "true" then
-				num = tokens.Token(tokens.number, 1, tablex.copy(scopes.number))
+				num = tokens.Token(tokens.number, 1, scopes.num)
 			elseif arguments[1].value == "false" then
-				num = tokens.Token(tokens.number, 0, tablex.copy(scopes.number))
+				num = tokens.Token(tokens.number, 0, scopes.num)
 			else
-				num = tokens.Token(tokens.number, tonumber(arguments[1].value), tablex.copy(scopes.number))
+				num = tokens.Token(tokens.number, tonumber(arguments[1].value), scopes.num)
 			end
 
 			return num
@@ -994,29 +1009,35 @@ scopes.number = scopes.Scope(
 	}
 )
 
-scopes.string = scopes.Scope(
+scopes.str = scopes.Scope(
 	nil,
 	nil,
 	{
 		__init       = {},
 		capitalize   = {},
+		copy         = {},
 		decapitalize = {},
 		endswith     = {},
+		length       = {},
 		lower        = {},
 		upper        = {},
 		startswith   = {},
 	},
 	{
 		__init = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments ~= 1 then
+			if #arguments > 1 then
 				print(
-					"error while evaluating function 'string.__init' at line " .. line
-					.. ": expected 1 argument, got "
+					"error while evaluating function 'str.__init' at line " .. line
+					.. ": expected 0-1 arguments, got "
 					.. #arguments
 					.. " instead"
 				)
 
 				os.exit()
+			end
+
+			if #arguments == 0 then
+				return tokens.Token(tokens.string, "\"\"", scopes.str)
 			end
 
 			local str
@@ -1025,7 +1046,7 @@ scopes.string = scopes.Scope(
 				str = tokens.Token(
 					tokens.string,
 					"\"" .. repr(arguments[1].value) .. "\"",
-					tablex.copy(scopes.string)
+					scopes.str
 				)
 			elseif arguments[1].type == tokens.string then
 				str = tablex.copy(arguments[1])
@@ -1033,7 +1054,7 @@ scopes.string = scopes.Scope(
 				str = tokens.Token(
 					tokens.string,
 					"\"" .. tostring(arguments[1].value) .. "\"",
-					tablex.copy(scopes.string)
+					scopes.str
 				)
 			end
 
@@ -1044,7 +1065,7 @@ scopes.string = scopes.Scope(
 		capitalize = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'string.capitalize' at line " .. line
+					"error while evaluating function 'str.capitalize' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -1079,10 +1100,26 @@ scopes.string = scopes.Scope(
 		end),
 
 
+		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'str.copy' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tablex.copy(arguments[1])
+		end),
+
+
 		decapitalize = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'string.decapitalize' at line " .. line
+					"error while evaluating function 'str.decapitalize' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -1102,7 +1139,7 @@ scopes.string = scopes.Scope(
 		endswith = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'string.endswith' at line " .. line
+					"error while evaluating function 'str.endswith' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -1113,7 +1150,7 @@ scopes.string = scopes.Scope(
 
 			if arguments[1].type ~= tokens.string then
 				print(
-					"error while evaluating function 'string.endswith' at line " .. line
+					"error while evaluating function 'str.endswith' at line " .. line
 					.. ": expected string while evaluating argument #1, got '"
 					.. string.lower(string.sub(arguments[1].type, 1, 1)) .. string.sub(arguments[1].type, 2, #arguments[1].type)
 					.. "' instead"
@@ -1123,17 +1160,33 @@ scopes.string = scopes.Scope(
 			end
 
 			if "\"" .. string.sub(arguments[1].value, #arguments[1].value - 1, #arguments[1].value - 1) .. "\"" == arguments[2].value then
-				return tokens.Token(tokens.boolean, true, tablex.copy(scopes.boolean))
+				return tokens.Token(tokens.boolean, true, scopes.bool)
 			end
 
-			return tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+			return tokens.Token(tokens.boolean, false, scopes.bool)
+		end),
+
+
+		length = tokens.Token(tokens.nativeFunction, function (arguments, line)
+			if #arguments - 1 ~= 0 then
+				print(
+					"error while evaluating function 'Array.length' at line " .. line
+					.. ": expected 0 arguments, got "
+					.. #arguments
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
 		end),
 
 
 		lower = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'string.lower' at line " .. line
+					"error while evaluating function 'str.lower' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -1150,7 +1203,7 @@ scopes.string = scopes.Scope(
 		upper = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 0 then
 				print(
-					"error while evaluating function 'string.upper' at line " .. line
+					"error while evaluating function 'str.upper' at line " .. line
 					.. ": expected 0 arguments, got "
 					.. #arguments
 					.. " instead"
@@ -1167,7 +1220,7 @@ scopes.string = scopes.Scope(
 		startswith = tokens.Token(tokens.nativeFunction, function (arguments, line)
 			if #arguments - 1 ~= 1 then
 				print(
-					"error while evaluating function 'string.startswith' at line " .. line
+					"error while evaluating function 'str.startswith' at line " .. line
 					.. ": expected 1 argument, got "
 					.. #arguments
 					.. " instead"
@@ -1178,7 +1231,7 @@ scopes.string = scopes.Scope(
 
 			if arguments[1].type ~= tokens.string then
 				print(
-					"error while evaluating function 'string.startswith' at line " .. line
+					"error while evaluating function 'str.startswith' at line " .. line
 					.. ": expected string while evaluating argument #1, got '"
 					.. string.lower(string.sub(arguments[1].type, 1, 1)) .. string.sub(arguments[1].type, 2, #arguments[1].type)
 					.. "' instead"
@@ -1188,50 +1241,55 @@ scopes.string = scopes.Scope(
 			end
 
 			if "\"" .. string.sub(arguments[1].value, 2, 2) .. "\"" == arguments[2].value then
-				return tokens.Token(tokens.boolean, true, tablex.copy(scopes.boolean))
+				return tokens.Token(tokens.boolean, true, scopes.bool)
 			end
 
-			return tokens.Token(tokens.boolean, false, tablex.copy(scopes.boolean))
+			return tokens.Token(tokens.boolean, false, scopes.bool)
 		end),
 	}
 )
 
 
 scopes.declareVariable(
-	"array",
-	tokens.Token(tokens.class, "array", scopes.array),
+	"Array",
+	{},
+	tokens.Token(tokens.class, "array", scopes.Array),
 	true,
 	scopes.global,
 	0
 )
 
 scopes.declareVariable(
-	"boolean",
-	tokens.Token(tokens.class, "boolean", scopes.boolean),
+	"bool",
+	{},
+	tokens.Token(tokens.class, "boolean", scopes.bool),
 	true,
 	scopes.global,
 	0
 )
 
 scopes.declareVariable(
-	"dictionary",
-	tokens.Token(tokens.class, "dictionary", scopes.dictionary),
+	"Dictionary",
+	{},
+	tokens.Token(tokens.class, "dictionary", scopes.Dictionary),
 	true,
 	scopes.global,
 	0
 )
 
 scopes.declareVariable(
-	"number",
-	tokens.Token(tokens.class, "number", scopes.number),
+	"num",
+	{},
+	tokens.Token(tokens.class, "number", scopes.num),
 	true,
 	scopes.global,
 	0
 )
 
 scopes.declareVariable(
-	"string",
-	tokens.Token(tokens.class, "string", scopes.string),
+	"str",
+	{},
+	tokens.Token(tokens.class, "string", scopes.str),
 	true,
 	scopes.global,
 	0

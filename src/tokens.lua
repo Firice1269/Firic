@@ -25,14 +25,13 @@ tokens.TokenType = {
 
 	RUNTIME = {
 		ARRAY      = "array",
-		BOOLEAN    = "boolean",
-		CASE       = "case",
+		BOOLEAN    = "bool",
 		CLASS      = "class",
 		DICTIONARY = "dictionary",
 		ENUM       = "enum",
 		NULL       = "null",
-		NUMBER     = "number",
-		STRING     = "string",
+		NUMBER     = "num",
+		STRING     = "str",
 
 		FUNCTION = {
 			NATIVE = "native-function",
@@ -61,7 +60,6 @@ tokens.miscellaneousOperator = tokens.TokenType.OPERATOR.MISCELLANEOUS
 
 tokens.array          = tokens.TokenType.RUNTIME.ARRAY
 tokens.boolean        = tokens.TokenType.RUNTIME.BOOLEAN
-tokens.case           = tokens.TokenType.RUNTIME.CASE
 tokens.class          = tokens.TokenType.RUNTIME.CLASS
 tokens.dictionary     = tokens.TokenType.RUNTIME.DICTIONARY
 tokens.enum           = tokens.TokenType.RUNTIME.ENUM

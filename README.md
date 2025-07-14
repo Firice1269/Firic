@@ -17,7 +17,11 @@ Example:
 
 ### Data Types
 
-Firic supports 10 basic types: `array`, `bool` (short for "boolean"), `case`, `class`, `dict` (short for "dictionary"), `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `func` (short for "function").
+Firic supports 9 basic types: `Array`, `bool` (short for "boolean"), `class`, `Dictionary`, `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `function`.
+
+#### Type Annotations
+
+In Firic, the type of a variable or function parameter can be annotated by adding a colon (`:`) after the name of the variable/parameter, followed by the name of its type. The type of a function's return type can also be annotated, instead by adding a colon after the parameters of the function, followed by the name of its type. If multiple types are needed in a single type annotation, they can be separated by a vertical bar (`|`). All example code henceforth will use type annotations whenever possible, but note that type annotations are not required. If a type is not annotated, it is inferred.
 
 #### Arrays
 
@@ -27,7 +31,7 @@ To reference a value inside of an array, store the array in a variable (see [Var
 
 Example:
 ```swift
-let array = [
+let array: Array[num | Array[num]] = [
 	20,
 	8,
 	9,
@@ -51,10 +55,6 @@ Output:
 
 Booleans are values which can be either `true` or `false`.
 
-#### Cases
-
-See [Enums](#enums-1) below.
-
 #### Classes
 
 See [Classes](#classes-1) below.
@@ -63,19 +63,19 @@ See [Classes](#classes-1) below.
 
 Dictionaries are objects which contain other objects, like arrays. However, unlike arrays, dictionaries do not store values with ordered numeric indices. Instead, they store values in keys, which can be of any data type (including arrays and dictionaries) and are defined by the user.
 
-To create these key-value pairs, put the key first, then the value, and separate them by a colon (`:`). Then, to create a dictionary, simply enclose a list of comma-separated key-value pairs with braces (`{}`). Note that duplicate keys are not permitted.
+To create these key-value pairs, put the key first, then the value, and separate them by a colon. Then, to create a dictionary, simply enclose a list of comma-separated key-value pairs with braces (`{}`). Note that duplicate keys are not permitted.
 
 Referencing a value inside a dictionary is very similar to referencing an element inside an array, only instead of a number, put the key of the key-value pair to be referenced inside the brackets.
 
 Example:
 ```swift
-let dict = {
+let dictionary: Dictionary{null | num: str} = {
 	null: "",
 	0:    "1",
 	1:    "0",
 }
 
-print(dict[1]);
+print(dictionary[1]);
 ```
 Output:
 ```
@@ -220,11 +220,11 @@ Firic uses two different keywords for declaring variables: `let` and `var`. Vari
 
 Example:
 ```swift
-var x = 24
-x     = 1 
+var x: num = 24
+x = 1 
 
-let y = -24
-y     = -1
+let y: num = -24
+y = -1
 ```
 Output:
 ```
@@ -237,7 +237,7 @@ If statements are first initiated with the `if` keyword, followed by a condition
 
 Example:
 ```swift
-let n = 81
+let n: num = 81
 
 if n == 80 {
 	print("n is 80");
@@ -264,7 +264,7 @@ For loops must begin with the `for` keyword, followed by a variable name, then t
 
 Example:
 ```swift
-let fibonacci = [
+let fibonacci: Array[num] = [
 	0,
 	1,
 	1,
@@ -307,7 +307,7 @@ While loops must begin with the `while` keyword, followed by a condition. Then, 
 
 Example:
 ```swift
-var i = 1
+var i: num = 1
 
 while i <= 10 {
 	print(i);
@@ -343,8 +343,8 @@ Functions can be defined by a user with the `func` keyword, followed by the func
 
 Example:
 ```swift
-func multiply(a, b) {
-	var result = 0
+func multiply(a: num, b: num): num {
+	var result: num = 0
 
 	for _ in range(a) {
 		result += b
@@ -364,10 +364,6 @@ Output:
 
 All functions built into Firic are defined in Lua. The following is the full list of them, each with a description of what they do:
 
-The `copy` function takes in one argument (which must be an array, dictionary, or string) and returns a copy of it.
-
-The `len` function takes in one argument (which must be an array or string) and returns its length.
-
 The `print` function takes in a variable number of arguments and prints all of them, separated by newlines.
 
 The `randint` function takes in two arguments (which must both be numbers), the first of which is optional (defaults to `1`), and returns a random integer between those two arguments (inclusive).
@@ -377,55 +373,67 @@ The `range` function takes in three arguments (which must all be numbers), the f
 The `typeof` function takes in one argument and returns its type as a string.
 
 
-The `array.__init` function takes in one argument, attempts to convert the argument to a string, and returns an array containing every character of that string.
+The `Array.__init` function takes in one argument, attempts to convert the argument to a string, and returns an array containing every character of that string.
 
-The `array.contains` function takes in one argument and returns `true` if the array contains the argument (or `false` if it doesn't contain the argument).
+The `Array.contains` function takes in one argument and returns `true` if the array contains the argument (or `false` if it doesn't contain the argument).
 
-The `array.find` function takes in one argument and returns an array containing every index at which that element occurs in the array.
+The `Array.copy` function returns a copy of the array.
 
-The `array.insert` function takes in two arguments (the second of which must be a number), the second of which is optional (defaults to `-1`), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
+The `Array.find` function takes in one argument and returns an array containing every index at which that element occurs in the array.
 
-The `array.randelement` function takes in no arguments and returns a random element from the array.
+The `Array.insert` function takes in two arguments (the second of which must be a number), the second of which is optional (defaults to `-1`), inserts the first argument into the array at the index equal to the second argument, and returns the resulting array.
 
-The `array.remove` function takes in one argument (which must be a number), removes the element at the index equal to it from the array, and returns the resulting array.
+The `Array.length` function returns the length of the array.
 
-The `array.reverse` function takes in no arguments, reverses the order of the elements in the array, and returns the resulting array.
+The `Array.randelement` function takes in no arguments and returns a random element from the array.
 
-The `array.sort` function takes in one argument (which must be a boolean), which is optional (defaults to `false`), sorts the array in ascending order (unless the argument is `true`, in which case the array would be sorted in descending order), and returns the resulting array.
+The `Array.remove` function takes in one argument (which must be a number), removes the element at the index equal to it from the array, and returns the resulting array.
 
+The `Array.reverse` function takes in no arguments, reverses the order of the elements in the array, and returns the resulting array.
 
-The `boolean.__init` function takes in one argument and returns `true` if the argument is `"true"` or a non-zero number, or returns `false` if the argument is `"false"` or `0`.
-
-
-The `dictionary.__init` function takes in one argument and, if the argument is an array, for each even index in that array, stores the element at that index as a key inside a dictionary (which is returned when completed), and stores the following element as that key's value.
-
-The `dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` otherwise).
-
-The `dictionary.find` function takes in one argument and returns an array containing every key at which that value occurs in the dictionary.
-
-The `dictionary.insert` function takes in two arguments, inserts the first argument into the dictionary with a key equal to the second argument, and returns the resulting dictionary.
-
-The `dictionary.keys` function takes in no arguments and returns an array containing all of the keys of the dictionary.
-
-The `dictionary.remove` function takes in one argument, removes the value at the key equal to it from the dictionary, and returns the resulting dictionary.
-
-The `dictionary.values` function takes in no arguments and returns an array containing all of the values of the dictionary.
+The `Array.sort` function takes in one argument (which must be a boolean), which is optional (defaults to `false`), sorts the array in ascending order (unless the argument is `true`, in which case the array would be sorted in descending order), and returns the resulting array.
 
 
-The `number.__init` function takes in one argument and returns `1` if the argument is `true`, `0` if the argument is `false`, or a number from a string if the string is able to be parsed as a number.
+The `bool.__init` function takes in one argument and returns `true` if the argument is `"true"` or a non-zero number, or returns `false` if the argument is `"false"` or `0`.
 
 
-The `string.capitalize` function takes in no arguments, makes the first character of each substring (separated by spaces) in the string an uppercase letter (if possible), and returns the resulting string.
+The `Dictionary.__init` function takes in one argument and, if the argument is an array, for each even index in that array, stores the element at that index as a key inside a dictionary (which is returned when completed), and stores the following element as that key's value.
 
-The `string.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
+The `Dictionary.contains` function takes in one argument and returns `true` if the dictionary contains the argument (or `false` otherwise).
 
-The `string.endswith` function takes in one argument and returns `true` if the string's last character is equal to the argument (or `false` otherwise).
+The `Dictionary.copy` function returns a copy of the dictionary.
 
-The `string.lower` function takes in no arguments, makes all characters of the string uppercase letters (if possible), and returns the resulting string.
+The `Dictionary.find` function takes in one argument and returns an array containing every key at which that value occurs in the dictionary.
 
-The `string.upper` function takes in no arguments, makes all characters of the string lowercase letters (if possible), and returns the resulting string.
+The `Dictionary.insert` function takes in two arguments, inserts the first argument into the dictionary with a key equal to the second argument, and returns the resulting dictionary.
 
-The `string.startswith` function takes in one argument and returns `true` if the string's first character is equal to the argument (or `false` otherwise).
+The `Dictionary.keys` function takes in no arguments and returns an array containing all of the keys of the dictionary.
+
+The `Dictionary.length` function returns the length of the dictionary.
+
+The `Dictionary.remove` function takes in one argument, removes the value at the key equal to it from the dictionary, and returns the resulting dictionary.
+
+The `Dictionary.values` function takes in no arguments and returns an array containing all of the values of the dictionary.
+
+
+The `num.__init` function takes in one argument and returns `1` if the argument is `true`, `0` if the argument is `false`, or a number from a string if the string is able to be parsed as a number.
+
+
+The `str.capitalize` function takes in no arguments, makes the first character of each substring (separated by spaces) in the string an uppercase letter (if possible), and returns the resulting string.
+
+The `str.copy` function returns a copy of the string.
+
+The `str.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
+
+The `str.endswith` function takes in one argument and returns `true` if the string's last character is equal to the argument (or `false` otherwise).
+
+The `str.length` function returns the length of the string.
+
+The `str.lower` function takes in no arguments, makes all characters of the string uppercase letters (if possible), and returns the resulting string.
+
+The `str.upper` function takes in no arguments, makes all characters of the string lowercase letters (if possible), and returns the resulting string.
+
+The `str.startswith` function takes in one argument and returns `true` if the string's first character is equal to the argument (or `false` otherwise).
 
 ### Classes
 
@@ -434,14 +442,14 @@ Classes can be defined by the `class` keyword, followed by the class's name, the
 Example:
 ```swift
 class Person {
-	var name
+	var name: str
 
-	func __init(self, name) {
+	func __init(self, name: str): null {
 		self.name = name.lower().capitalize()
 	}
 
 
-	func greet(self, person) {
+	func greet(self, person: Person): null {
 		print(self.name + " says \"Hello, " + person.name +".\"");
 	}
 }
@@ -462,15 +470,15 @@ Classes can inherit traits from other classes. To do this, define a class, but p
 Example:
 ```swift
 class Animal {
-	var type
-	var name
+	var type: str
+	var name: str
 }
 
 
 class Cat < Animal {
 	type = "Feline"
 
-	func __init(self, name) {
+	func __init(self, name: str): null {
 		self.name = name.lower().capitalize()
 	}
 }
@@ -478,7 +486,7 @@ class Cat < Animal {
 class Dog < Animal {
 	type = "Canine"
 
-	func __init(self, name) {
+	func __init(self, name: str): null {
 		self.name = name.lower().capitalize()
 	}
 }
@@ -506,7 +514,7 @@ Magic methods are those which have an additional use to whatever functionality t
 
 `__init`: initializer
 
-`__string`: tostring converter
+`__str`: tostring converter
 
 ### Enums
 
@@ -522,15 +530,15 @@ enum AnimalType {
 
 
 class Animal {
-	var type
-	var name
+	var type: AnimalType
+	var name: str
 }
 
 
 class Cat < Animal {
 	type = AnimalType.Feline
 
-	func __init(self, name) {
+	func __init(self, name: str): null {
 		self.name = name.lower().capitalize()
 	}
 }
@@ -538,7 +546,7 @@ class Cat < Animal {
 class Dog < Animal {
 	type = AnimalType.Canine
 
-	func __init(self, name) {
+	func __init(self, name: str): null {
 		self.name = name.lower().capitalize()
 	}
 }

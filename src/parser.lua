@@ -119,7 +119,7 @@ function parser.parseClassDefinition(tokenizedCode)
 		print(
 			"error while parsing class definition at line " .. start
 			.. ": expected identifier while parsing name, got '"
-			.. string.lower(name.type)
+			.. name.type
 			.. "' instead"
 		)
 
@@ -137,7 +137,7 @@ function parser.parseClassDefinition(tokenizedCode)
 			print(
 				"error while parsing class definition at line " .. start
 				.. ": expected identifier while parsing inherited class, got "
-				.. string.lower(inherited.type)
+				.. string.lower(string.sub(inherited.type, 1, 1)) .. string.sub(inherited.type, 2, #inherited.type)
 				.. " instead"
 			)
 
@@ -203,13 +203,13 @@ function parser.parseEnum(tokenizedCode)
 
 	shift(tokenizedCode)
 
-	local name = shift(tokenizedCode)
+	local name = parser.parseExpression(tokenizedCode)
 
-	if name.type ~= tokens.identifier then
+	if name.type ~= ast.Identifier then
 		print(
 			"error while parsing enum at line " .. start
 			.. ": expected identifier while parsing name, got '"
-			.. string.lower(name.type)
+			.. string.sub(string.lower(name.type), 1, 1) .. string.sub(name.type, 2, #name.type)
 			.. "' instead"
 		)
 
@@ -236,7 +236,20 @@ function parser.parseEnum(tokenizedCode)
 	local body = {}
 
 	if tokenizedCode[1].value ~= "}" then
-		tablex.push(body, parser.parseExpression(tokenizedCode, true))
+		local case = parser.parseExpression(tokenizedCode, true)
+
+		if case.type ~= ast.Identifier then
+			print(
+				"error while parsing enum case at line " .. case.start
+				.. ": expected identifier, got "
+				.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
+				.. " instead"
+			)
+
+			os.exit()
+		end
+
+		tablex.push(body, case.value)
 
 		while tokenizedCode[1].value == "," do
 			shift(tokenizedCode)
@@ -245,7 +258,20 @@ function parser.parseEnum(tokenizedCode)
 				break
 			end
 
-			tablex.push(body, parser.parseExpression(tokenizedCode, true))
+			 case = parser.parseExpression(tokenizedCode, true)
+
+			if case.type ~= ast.Identifier then
+				print(
+					"error while parsing enum case at line " .. case.start
+					.. ": expected identifier, got "
+					.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			tablex.push(body, case.value)
 		end
 	end
 
@@ -260,21 +286,6 @@ function parser.parseEnum(tokenizedCode)
 		)
 
 		os.exit()
-	end
-
-	for i, v in ipairs(body) do
-		if v.type ~= ast.Identifier then
-			print(
-				"error while parsing enum case at line " .. v.start
-				.. ": expected identifier, got "
-				.. string.lower(v.type)
-				.. " instead"
-			)
-
-			os.exit()
-		end
-
-		body[i] = v.value
 	end
 
 	return ast.Node(
@@ -306,30 +317,111 @@ function parser.parseFunction(tokenizedCode, start)
 		name = shift(tokenizedCode).value
 	end
 
-	local arguments = parser.parseArguments(tokenizedCode)
+	local token = shift(tokenizedCode)
 
-	local parameters = {}
+	if token.value ~= "(" then
+		print(
+			"error while parsing function at line " .. start
+			.. ": expected '(' while parsing parameters, got '"
+			.. token.value
+			.. "' instead"
+		)
 
-	for _, v in ipairs(arguments) do
-		if v.type ~= ast.Identifier then
-			print(
-				"error while parsing function definition at line " .. start
-				.. ": expected identifier while parsing parameters, got "
-				.. string.lower(v.type)
-				.. " instead"
-			)
-
-			os.exit()
-		end
-
-		tablex.push(parameters, v.value)
+		os.exit()
 	end
 
 	while tokenizedCode[1].type == tokens.eol do
 		shift(tokenizedCode)
 	end
 
-	local token = shift(tokenizedCode)
+	local parameters = {}
+
+	if tokenizedCode[1].value ~= ")" then
+		local parameter = parser.parseExpression(tokenizedCode, true)
+
+		if parameter.type ~= ast.Identifier then
+			print(
+				"error while parsing function call at line " .. start
+				.. ": expected identifier while parsing parameters, got "
+				.. string.sub(string.lower(parameter.type), 1, 1) .. string.sub(parameter.type, 2, #parameter.type)
+				.. " instead"
+			)
+
+			os.exit()
+		end
+
+		local types = {}
+
+		if tokenizedCode[1].value == ":" then
+			shift(tokenizedCode)
+
+			types = parser.parseTypeAnnotation(tokenizedCode)
+		end
+
+		tablex.push(
+			parameters,
+			{
+				name  = parameter.value,
+				types = types,
+			}
+		)
+
+		while tokenizedCode[1].value == "," do
+			shift(tokenizedCode)
+
+			parameter = parser.parseExpression(tokenizedCode, true)
+
+			if parameter.type ~= ast.Identifier then
+				print(
+					"error while parsing function call at line " .. start
+					.. ": expected identifier while parsing parameters, got "
+					.. string.lower(string.sub(parameter.type, 1, 1)) .. string.sub(parameter.type, 2, #parameter.type)
+					.. " instead"
+				)
+
+				os.exit()
+			end
+
+			types = {}
+
+			if tokenizedCode[1].value == ":" then
+				shift(tokenizedCode)
+
+				types = parser.parseTypeAnnotation(tokenizedCode)
+			end
+
+			tablex.push(
+				parameters,
+				{
+					name  = parameter.value,
+					types = types,
+				}
+			)
+		end
+	end
+
+	token = shift(tokenizedCode)
+
+	if token.value ~= ")" then
+		print(
+			"error while parsing function call at line " .. start
+			.. ": expected ')' while parsing parameters, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	local types = {}
+
+	if tokenizedCode[1].value == ":" then
+		shift(tokenizedCode)
+
+		types = parser.parseTypeAnnotation(tokenizedCode)
+	end
+
+	token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
 		print(
@@ -367,6 +459,7 @@ function parser.parseFunction(tokenizedCode, start)
 		{
 			name       = name,
 			parameters = parameters,
+			types      = types,
 			body       = body,
 		}
 	)
@@ -560,17 +653,25 @@ function parser.parseVariableDeclaration(tokenizedCode)
 	if name.type ~= tokens.identifier then
 		print(
 			"error while parsing variable declaration at line " .. start
-			.. ": expected identifier while parsing name, got '"
-			.. string.lower(name.type)
-			.. "' instead"
+			.. ": expected identifier while parsing name, got "
+			.. name.type
+			.. " instead"
 		)
 
 		os.exit()
 	end
 
+	local types
+
+	if tokenizedCode[1].value == ":" then
+		shift(tokenizedCode)
+
+		types = parser.parseTypeAnnotation(tokenizedCode)
+	end
+
 	local token = shift(tokenizedCode)
 
-	if token.type == tokens.eol or tokenizedCode[1].value == ";" then
+	if token.type == tokens.eol or token.value == ";" then
 		if constant then
 			print(
 				"error while parsing variable declaration at line " .. start
@@ -590,13 +691,32 @@ function parser.parseVariableDeclaration(tokenizedCode)
 			end
 		end
 
+		local value = ast.Node(nil, ast.Identifier, "null")
+
+		if #types == 1 then
+			if type(types[1]) == "table" then
+				if types[1].keys == nil then
+					value = ast.Node(nil, ast.Array, {})
+				else
+					value = ast.Node(nil, ast.Dictionary, {})
+				end
+			elseif types[1] == "bool" then
+				value = ast.Node(nil, ast.Identifier, "false")
+			elseif types[1] == "num" then
+				value = ast.Node(nil, ast.Number, 0)
+			elseif types[1] == "str" then
+				value = ast.Node(nil, ast.String, "\"\"")
+			end
+		end
+
 		return ast.Node(
 			start,
 			ast.VariableDeclaration,
 			{
 				name     = name.value,
 				constant = constant,
-				value    = ast.Node(nil, ast.Identifier, "null")
+				types    = types,
+				value    = value,
 			}
 		)
 	elseif token.value ~= "=" then
@@ -616,6 +736,7 @@ function parser.parseVariableDeclaration(tokenizedCode)
 		{
 			name     = name.value,
 			constant = constant,
+			types    = types,
 			value    = parser.parseExpression(tokenizedCode),
 		}
 	)
@@ -636,6 +757,110 @@ function parser.parseVariableDeclaration(tokenizedCode)
 	end
 
 	return declaration
+end
+
+
+function parser.parseTypeAnnotation(tokenizedCode)
+	local start = #newlines
+
+	local identifier = shift(tokenizedCode)
+
+	if identifier.type ~= tokens.identifier then
+		print(
+			"error while parsing type annotation at line " .. start
+			.. ": expected identifier, got "
+			.. identifier.type
+			.. " instead"
+		)
+
+		os.exit()
+	end
+
+	local types = {identifier.value}
+
+	if identifier.value == "Array" then
+		types = {
+			{},
+		}
+
+		if tokenizedCode[1].value == "[" then
+			shift(tokenizedCode)
+
+			for _, v in ipairs(parser.parseTypeAnnotation(tokenizedCode)) do
+				tablex.push(types[1], v)
+			end
+
+			local token = shift(tokenizedCode)
+
+			if token.value ~= "]" then
+				print(
+					"error while parsing type annotation at line " .. start
+					.. ": expected ']', got '"
+					.. token.value
+					.. "' instead"
+				)
+
+				os.exit()
+			end
+		end
+	elseif identifier.value == "Dictionary" then
+		types = {
+			{
+				keys = {},
+				values = {},
+			},
+		}
+
+		if tokenizedCode[1].value == "{" then
+			shift(tokenizedCode)
+
+			for _, v in ipairs(parser.parseTypeAnnotation(tokenizedCode)) do
+				tablex.push(types[1].keys, v)
+			end
+
+			local token = shift(tokenizedCode)
+
+			if token.value ~= ":" then
+				print(
+					"error while parsing type annotation at line " .. start
+					.. ": expected ':', got '"
+					.. token.value
+					.. "' instead"
+				)
+
+				os.exit()
+			end
+
+			for _, v in ipairs(parser.parseTypeAnnotation(tokenizedCode)) do
+				tablex.push(types[1].values, v)
+			end
+
+			token = shift(tokenizedCode)
+
+			if token.value ~= "}" then
+				print(
+					"error while parsing type annotation at line " .. start
+					.. ": expected '}', got '"
+					.. token.value
+					.. "' instead"
+				)
+
+				os.exit()
+			end
+		end
+	elseif identifier.value == "any" then
+		return {}
+	end
+
+	while tokenizedCode[1].value == "|" do
+		shift(tokenizedCode)
+
+		for _, v in ipairs(parser.parseTypeAnnotation(tokenizedCode)) do
+			tablex.push(types, v)
+		end
+	end
+
+	return types
 end
 
 
@@ -1112,7 +1337,7 @@ function parser.parseArguments(tokenizedCode)
 	if token.value ~= "(" then
 		print(
 			"error while parsing function call at line " .. start
-			.. ": expected '(' while parsing parameters, got '"
+			.. ": expected '(' while parsing arguments, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1141,7 +1366,7 @@ function parser.parseArguments(tokenizedCode)
 	if token.value ~= ")" then
 		print(
 			"error while parsing function call at line " .. start
-			.. ": expected ')' while parsing parameters, got '"
+			.. ": expected ')' while parsing arguments, got '"
 			.. token.value
 			.. "' instead"
 		)

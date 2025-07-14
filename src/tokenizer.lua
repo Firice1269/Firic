@@ -150,12 +150,14 @@ function tokenizer.tokenize(sourceCode)
 								str = str .. tablex.shift(v)
 
 								break
-							elseif v[1] == "\n" then
-								print("error while tokenizing line " .. i .. ": unfinished string literal")
-								os.exit()
 							else
 								str = str .. tablex.shift(v)
 							end
+						end
+
+						if string.sub(str, #str, #str) ~= "\"" then
+							print("error while tokenizing line " .. i .. ": unfinished string literal")
+							os.exit()
 						end
 
 						tablex.push(

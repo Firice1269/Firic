@@ -31,11 +31,11 @@
 			"patterns": [
 				{
 					"name": "entity.name.function.firic",
-					"match": "[a-zA-Z_][a-zA-Z0-9_]* *(?=[(])"
+					"match": "[a-zA-Z_][a-zA-Z0-9_]*(?= *[(])"
 				},
 				{
 					"name": "entity.name.type.firic",
-					"match": "(?<=\\b(class|enum)\\b) +[a-zA-Z_][a-zA-Z0-9_]*"
+					"match": "(?<=\\b(class|enum)\\b +)[a-zA-Z_][a-zA-Z0-9_]*"
 				},
 				{
 					"name": "entity.name.type.firic",
@@ -44,6 +44,14 @@
 				{
 					"name": "entity.name.type.firic",
 					"match": "\\."
+				},
+				{
+					"name": "entity.name.type.firic",
+					"match": "(?<=: *)[a-zA-Z_][a-zA-Z0-9_]*"
+				},
+				{
+					"name": "entity.name.type.firic",
+					"match": "(?<=[{\\[].*)[a-zA-Z_][a-zA-Z0-9_]*(?=.*[\\]}])"
 				}
 			]
 		},
