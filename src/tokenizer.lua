@@ -6,20 +6,23 @@ local tokenizer = {}
 
 function tokenizer.tokenize(sourceCode)
 	local KEYWORDS = {
-		["break"]    = {},
-		["continue"] = {},
-		["else"]     = {},
-		["elseif"]   = {},
-		["export"]   = {},
-		["for"]      = {},
-		["func"]     = {},
-		["if"]       = {},
-		["in"]       = {},
-		["import"]   = {},
-		["let"]      = {},
-		["return"]   = {},
-		["var"]      = {},
-		["while"]    = {},
+		["break"]  = {},
+		case       = {},
+		continue   = {},
+		default    = {},
+		["else"]   = {},
+		["elseif"] = {},
+		export     = {},
+		["for"]    = {},
+		func       = {},
+		["if"]     = {},
+		["in"]     = {},
+		import     = {},
+		let        = {},
+		["return"] = {},
+		switch     = {},
+		var        = {},
+		["while"]  = {},
 	}
 
 	local lines = {}

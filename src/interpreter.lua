@@ -55,7 +55,7 @@ local function checkArgumentTypes(left, operator, right, line)
 end
 
 
-local function checkVariableTypes(name, types, value)
+function checkVariableTypes(name, types, value)
 	local fail   = true
 	local result = tablex.copy(value)
 
@@ -68,14 +68,16 @@ local function checkVariableTypes(name, types, value)
 			end
 
 			if type(t) == "table" then
-				if value.type == tokens.array then
-					for i, v in ipairs(value.value) do
-						local f, n, r = checkVariableTypes(name .. "[" .. i - 1 .. "]", t, v)
-						fail = f
+				if t.keys == nil then
+					if value.type == tokens.array then
+						for i, v in ipairs(value.value) do
+							local f, n, r = checkVariableTypes(name .. "[" .. i - 1 .. "]", t, v)
+							fail = f
 
-						if fail then
-							name, result = n, r
-							break
+							if fail then
+								name, result = n, r
+								break
+							end
 						end
 					end
 				elseif value.type == tokens.dictionary then
@@ -125,7 +127,7 @@ function interpreter.evaluateArray(array, scope)
 		tablex.push(values, interpreter.evaluate(v, scope))
 	end
 
-	return tokens.Token(tokens.array, values, scopes.Array)
+	return tokens.Token(tokens.array, values)
 end
 
 
@@ -139,47 +141,47 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	local result
 
 	if operator == "<" then
-		result = tokens.Token(tokens.boolean, left.value < right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value < right.value)
 	elseif operator == "<=" then
-		result = tokens.Token(tokens.boolean, left.value <= right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value <= right.value)
 	elseif operator == "<<" then
-		result = tokens.Token(tokens.boolean, left.value << right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value << right.value)
 	elseif operator == ">" then
-		result = tokens.Token(tokens.boolean, left.value > right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value > right.value)
 	elseif operator == ">=" then
-		result = tokens.Token(tokens.boolean, left.value >= right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value >= right.value)
 	elseif operator == ">>" then
-		result = tokens.Token(tokens.boolean, left.value >> right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value >> right.value)
 	elseif operator == "==" then
-		result = tokens.Token(tokens.boolean, left.value == right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value == right.value)
 	elseif operator == "!=" then
-		result = tokens.Token(tokens.boolean, left.value ~= right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value ~= right.value)
 	elseif operator == "&" then
-		result = tokens.Token(tokens.number, left.value & right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value & right.value)
 	elseif operator == "&&" then
-		result = tokens.Token(tokens.boolean, left.value and right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value and right.value)
 	elseif operator == "|" then
-		result = tokens.Token(tokens.number, left.value | right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value | right.value)
 	elseif operator == "||" then
-		result = tokens.Token(tokens.boolean, left.value or right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value or right.value)
 	elseif operator == "^" then
-		result = tokens.Token(tokens.number, left.value ~ right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value ~ right.value)
 	elseif operator == "**" then
-		result = tokens.Token(tokens.number, left.value ^ right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value ^ right.value)
 	elseif operator == "//" then
-		result = tokens.Token(tokens.number, left.value ^ (1 / right.value), scopes.num)
+		result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 	elseif operator == "*" then
-		result = tokens.Token(tokens.number, left.value * right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value * right.value)
 	elseif operator == "/" then
-		result = tokens.Token(tokens.number, left.value / right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value / right.value)
 	elseif operator == "%" then
-		result = tokens.Token(tokens.number, left.value % right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value % right.value)
 	elseif operator == "+" then
 		if left.type == tokens.string or right.type == tokens.string then
 			if left.type == tokens.number then
-				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"", scopes.str)
+				left = tokens.Token(tokens.string, "\"" .. tostring(left.value) .. "\"")
 			elseif right.type == tokens.number then
-				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"", scopes.str)
+				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
 			end
 
 			result = tokens.Token(
@@ -187,10 +189,10 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			result = tokens.Token(tokens.number, left.value + right.value, scopes.num)
+			result = tokens.Token(tokens.number, left.value + right.value)
 		end
 	elseif operator == "-" then
-		result = tokens.Token(tokens.number, left.value - right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value - right.value)
 	end
 
 	return result
@@ -330,7 +332,7 @@ function interpreter.evaluateDictionary(dictionary, scope)
 		end
 	end
 
-	return tokens.Token(tokens.dictionary, values, scopes.Dictionary)
+	return tokens.Token(tokens.dictionary, values)
 end
 
 
@@ -338,10 +340,66 @@ function interpreter.evaluateEnum(statement, scope)
 	local class = scopes.Scope()
 
 	for _, v in ipairs(statement.value.body) do
+		local name = v.value
+		local value
+
+		if v.value.parameters == nil then
+			value = tokens.Token(statement.value.name, {name})
+		else
+			name  = name.name
+			value = tokens.Token(
+				tokens.nativeFunction,
+				load(
+					" \
+					return function (arguments, line) \
+						table.remove(arguments, 1) \
+						 \
+						if #arguments ~= " .. #v.value.parameters .. " then \
+						 	print( \
+								\"error while evaluating case '" .. name .. "' at line \" .. line \
+								.. \": expected " .. #v.value.parameters .. " arguments, got \" \
+								.. #arguments \
+								.. \" instead\" \
+							) \
+							 \
+							os.exit() \
+						end \
+						 \
+						local value = { \
+							type  = \"" .. statement.value.name .. "\", \
+							value = {\"" .. name .. "\", {}}, \
+						} \
+						 \
+						for i, v in ipairs(load(\"return " .. string.gsub(tablex.repr(v.value.parameters), "\n", "\\\n") .. "\")()) do \
+							local fail, name, result = checkVariableTypes( \
+								\"" .. name .. "\" .. \"[\" .. i - 1 .. \"]\", \
+								v, \
+								arguments[i] \
+							) \
+							\
+							if fail then \
+								print( \
+									\"error while evaluating case '" .. name .. "' at line \" .. line \
+									.. \": cannot set type of \" .. name .. \" to \" .. result.type \
+								) \
+								\
+								os.exit() \
+							end \
+							 \
+							table.insert(value.value[2], #value.value[2] + 1, arguments[i]) \
+						end \
+						 \
+						return value \
+					end \
+					"
+				)()
+			)
+		end
+
 		scopes.declareVariable(
-			v,
+			name,
 			{},
-			tokens.Token(statement.value.name, {v}),
+			value,
 			true,
 			class,
 			statement.start
@@ -634,7 +692,16 @@ function interpreter.evaluateMemberExpression(expression, scope)
 	end
 
 	local parent = scope
-	scope        = object.class
+
+	if object.class == nil then
+		if object.type == tokens.array or object.type == tokens.dictionary then
+			scope = scopes[string.upper(string.sub(object.type, 1, 1)) .. string.sub(object.type, 2, #object.type)]
+		elseif object.type == tokens.boolean or object.type == tokens.number or object.type == tokens.string then
+			scope = scopes[object.type]
+		end
+	else
+		scope = object.class
+	end
 
 	local member = expression.value.right
 
@@ -686,7 +753,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 			condition = condition and not v.value
 		end
 
-		condition = tokens.Token(tokens.boolean, condition, scopes.bool)
+		condition = tokens.Token(tokens.boolean, condition)
 	elseif statement.keyword == "elseif" then
 		for _, v in ipairs(conditions) do
 			condition = condition and not v.value
@@ -705,7 +772,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 			os.exit()
 		end
 
-		condition = tokens.Token(tokens.boolean, condition and v.value, scopes.bool)
+		condition = tokens.Token(tokens.boolean, condition and v.value)
 		tablex.push(conditions, condition)
 	else
 		condition = interpreter.evaluate(statement.condition, scope)
@@ -794,7 +861,16 @@ function interpreter.evaluateIndexExpression(expression, scope)
 			return tokens.Token(tokens.null, "null")
 		end
 
-		return tokens.Token(tokens.string, "\"" .. value .. "\"", scopes.str)
+		return tokens.Token(tokens.string, "\"" .. value .. "\"")
+	else
+		print(
+			"error while evaluating index expression at line " .. expression.start ..
+			": expected array, dictionary, or string; got "
+			.. left.type
+			.. " instead"
+		)
+
+		os.exit()
 	end
 end
 
@@ -802,11 +878,74 @@ end
 function interpreter.evaluateProgram(program, scope)
 	local value = tokens.Token(tokens.null, "null")
 
-	for _, statement in ipairs(program.value) do
+	for _, statement in ipairs(program) do
 		value = interpreter.evaluate(statement, scope)
 	end
 
 	return value
+end
+
+
+function interpreter.evaluateSwitchStatement(statement, scope)
+	local value = interpreter.evaluate(statement.value.value, scope)
+
+	for _, case in ipairs(statement.value.cases) do
+		for _, v in ipairs(case.values) do
+			if
+				value.type ~= tokens.array
+				and value.type ~= tokens.boolean
+				and value.type ~= tokens.dictionary
+				and value.type ~= tokens.null
+				and value.type ~= tokens.number
+				and value.type ~= tokens.string
+				and #value.value ~= 0 and v.type == ast.MemberExpression and v.value.right.type == ast.FunctionCall
+			then
+				if value.value[2] == nil then
+					if value.value == interpreter.evaluate(v, scope).value then
+						return interpreter.evaluateProgram(case.body, scope)
+					else
+						return value
+					end
+				end
+
+				if value.value[1] == v.value.right.value.call.value then
+					scope = scopes.Scope(scope)
+
+					for i, argument in ipairs(v.value.right.value.arguments) do
+						if argument.type ~= ast.Identifier then
+							print(
+								"error while evaluating switch statement at line " .. argument.start
+								.. ": expected identifier while evaluating enum case, got "
+								.. string.lower(argument.type)
+								.. " instead"
+							)
+
+							os.exit()
+						end
+
+						scopes.declareVariable(
+							argument.value,
+							{},
+							value.value[2][i],
+							true,
+							scope,
+							statement.start
+						)
+					end
+
+					return interpreter.evaluateProgram(case.body, scope)
+				end
+			elseif value.value == interpreter.evaluate(v, scope).value then
+				return interpreter.evaluateProgram(case.body, scope)
+			end
+		end
+	end
+
+	if statement.value.default == nil then
+		return value
+	end
+
+	return interpreter.evaluateProgram(statement.value.default, scope)
 end
 
 
@@ -840,7 +979,7 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 
 	if operator == "-" then
 		if value.type == tokens.number then
-			result = tokens.Token(tokens.number, -value.value, scopes.num)
+			result = tokens.Token(tokens.number, -value.value)
 		else
 			print(
 				"error while evaluating unary expression at at line " .. expression.start
@@ -854,7 +993,7 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 		end
 	elseif operator == "~" then
 		if value.type == tokens.number then
-			result = tokens.Token(tokens.number, ~value.value, scopes.num)
+			result = tokens.Token(tokens.number, ~value.value)
 		else
 			print(
 				"error while evaluating unary expression at at line " .. expression.start
@@ -868,7 +1007,7 @@ function interpreter.evaluateUnaryExpression(expression, scope)
 		end
 	elseif operator == "!" then
 		if value.type == tokens.boolean then
-			result = tokens.Token(tokens.boolean, not value.value, scopes.bool)
+			result = tokens.Token(tokens.boolean, not value.value)
 		else
 			print(
 				"error while evaluating unary expression at at line " .. expression.start
@@ -916,35 +1055,35 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 	local result = right
 
 	if operator == "&=" then
-		result = tokens.Token(tokens.number, left.value & right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value & right.value)
 	elseif operator == "&&=" then
-		result = tokens.Token(tokens.boolean, left.value and right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value and right.value)
 	elseif operator == "|=" then
-		result = tokens.Token(tokens.number, left.value | right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value | right.value)
 	elseif operator == "||=" then
-		result = tokens.Token(tokens.boolean, left.value or right.value, scopes.bool)
+		result = tokens.Token(tokens.boolean, left.value or right.value)
 	elseif operator == "^=" then
-		result = tokens.Token(tokens.number, left.value ~ right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value ~ right.value)
 	elseif operator == "<<=" then
-		result = tokens.Token(tokens.number, left.value << right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value << right.value)
 	elseif operator == ">>=" then
-		result = tokens.Token(tokens.number, left.value >> right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value >> right.value)
 	elseif operator == "**=" then
-		result = tokens.Token(tokens.number, left.value ^ right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value ^ right.value)
 	elseif operator == "//=" then
-		result = tokens.Token(tokens.number, left.value ^ (1 / right.value), scopes.num)
+		result = tokens.Token(tokens.number, left.value ^ (1 / right.value))
 	elseif operator == "*=" then
-		result = tokens.Token(tokens.number, left.value * right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value * right.value)
 	elseif operator == "/=" then
-		result = tokens.Token(tokens.number, left.value / right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value / right.value)
 	elseif operator == "%=" then
-		result = tokens.Token(tokens.number, left.value % right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value % right.value)
 	elseif operator == "+=" then
 		if left.type == tokens.string or right.type == tokens.string then
 			if left.type == tokens.number then
-				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"", scopes.str)
+				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
 			elseif right.type == tokens.number then
-				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"", scopes.str)
+				right = tokens.Token(tokens.string, "\"" .. tostring(right.value) .. "\"")
 			end
 
 			result = tokens.Token(
@@ -952,10 +1091,10 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 				string.sub(left.value, 1, #left.value - 1) .. string.sub(right.value, 2, #right.value)
 			)
 		else
-			result = tokens.Token(tokens.number, left.value + right.value, scopes.num)
+			result = tokens.Token(tokens.number, left.value + right.value)
 		end
 	elseif operator == "-=" then
-		result = tokens.Token(tokens.number, left.value - right.value, scopes.num)
+		result = tokens.Token(tokens.number, left.value - right.value)
 	end
 
 	local fail, name, r = checkVariableTypes(
@@ -978,23 +1117,71 @@ end
 
 
 function interpreter.evaluateVariableDeclaration(statement, scope)
-	local value = interpreter.evaluate(statement.value.value, scope) or tokens.Token(tokens.null, "null")
-	local types = statement.value.types or {value.type}
+	local value = interpreter.evaluate(statement.value.value or ast.Node(nil, ast.Identifier, "null"), scope)
 
-	if value.type ~= tokens.null then
-		local fail, name, result = checkVariableTypes(statement.value.name, types, value)
+	local types = statement.value.types
 
-		if fail then
-			print(
-				"error while evaluating variable declaration at line " .. statement.start
-				.. ": cannot set type of '" .. name .. "' to '" .. result.type .. "'"
+	if types == nil then
+		if statement.value.value == nil then
+			types = {}
+		else
+			types = {value.type}
+		end
+	elseif #types == 1 and statement.value.value == nil then
+		if type(types[1]) == "table" then
+			local call
+
+			if types[1].keys == nil then
+				call = "Array"
+			else
+				call = "Dictionary"
+			end
+
+			value = interpreter.evaluateFunctionCall(
+				ast.Node(
+					nil,
+					ast.FunctionCall,
+					{
+						call      = ast.Node(nil, ast.Identifier, call),
+						arguments = {},
+					}
+				),
+				scope
 			)
-
-			os.exit()
+		elseif types[1] == "bool" or types[1] == "num" or types[1] == "str" then
+			value = interpreter.evaluateFunctionCall(
+				ast.Node(
+					nil,
+					ast.FunctionCall,
+					{
+						call      = ast.Node(nil, ast.Identifier, types[1]),
+						arguments = {},
+					}
+				),
+				scope
+			)
 		end
 	end
 
-	return scopes.declareVariable(statement.value.name, types, value, statement.value.constant, scope, statement.start)
+	local fail, name, result = checkVariableTypes(statement.value.name, types, value)
+
+	if fail and statement.value.value ~= nil then
+		print(
+			"error while evaluating variable declaration at line " .. statement.start
+			.. ": cannot set type of '" .. name .. "' to '" .. result.type .. "'"
+		)
+
+		os.exit()
+	end
+
+	return scopes.declareVariable(
+		statement.value.name,
+		types,
+		value,
+		statement.value.constant,
+		scope,
+		statement.start
+	)
 end
 
 
@@ -1024,11 +1211,13 @@ function interpreter.evaluate(astNode, scope)
 	elseif astNode.type == ast.MemberExpression then
 		return interpreter.evaluateMemberExpression(astNode, scope)
 	elseif astNode.type == ast.Number then
-		return tokens.Token(tokens.number, astNode.value, scopes.num)
+		return tokens.Token(tokens.number, astNode.value)
 	elseif astNode.type == ast.Program then
-		return interpreter.evaluateProgram(astNode, scope)
+		return interpreter.evaluateProgram(astNode.value, scope)
 	elseif astNode.type == ast.String then
-		return tokens.Token(tokens.string, astNode.value, scopes.str)
+		return tokens.Token(tokens.string, astNode.value)
+	elseif astNode.type == ast.SwitchStatement then
+		return interpreter.evaluateSwitchStatement(astNode, scope)
 	elseif astNode.type == ast.TernaryExpression then
 		return interpreter.evaluateTernaryExpression(astNode, scope)
 	elseif astNode.type == ast.UnaryExpression then

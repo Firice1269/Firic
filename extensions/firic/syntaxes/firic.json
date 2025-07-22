@@ -31,7 +31,7 @@
 			"patterns": [
 				{
 					"name": "entity.name.function.firic",
-					"match": "[a-zA-Z_][a-zA-Z0-9_]*(?= *[(])"
+					"match": "((?<!:[^=]*)|(?<=\\b(case|default)\\b.*))[a-zA-Z_][a-zA-Z0-9_]*(?= *[(])"
 				},
 				{
 					"name": "entity.name.type.firic",
@@ -39,19 +39,15 @@
 				},
 				{
 					"name": "entity.name.type.firic",
-					"match": "(?<=\\b(class|enum)\\b +[a-zA-Z_][a-zA-Z0-9_]* *< *)[a-zA-Z_][a-zA-Z0-9_]*"
-				},
-				{
-					"name": "entity.name.type.firic",
 					"match": "\\."
 				},
 				{
 					"name": "entity.name.type.firic",
-					"match": "(?<=: *)[a-zA-Z_][a-zA-Z0-9_]*"
+					"match": "(?<!\\?[^?]*)(?<=:[^(=)]*)[a-zA-Z_][a-zA-Z0-9_]*(?! *[(])"
 				},
 				{
 					"name": "entity.name.type.firic",
-					"match": "(?<=[{\\[].*)[a-zA-Z_][a-zA-Z0-9_]*(?=.*[\\]}])"
+					"match": "\\b(any|Array|bool|Dictionary|num|str)\\b"
 				}
 			]
 		},
@@ -63,7 +59,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.firic",
-					"match": "\\b(break|continue|else|elseif|export|for|if|in|import|return|while)\\b"
+					"match": "\\b(break|case|continue|default|else|elseif|export|for|if|in|import|return|switch|while)\\b"
 				},
 				{
 					"name": "keyword.other.firic",

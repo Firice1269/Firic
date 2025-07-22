@@ -1,6 +1,13 @@
 {
-	"class": {
-		"prefix": ["class ..."],
+	"Case": {
+		"prefix": ["case"],
+		"body": [
+			"case $1:",
+			"\t$0"
+		]
+	},
+	"Class": {
+		"prefix": ["class"],
 		"body": [
 			"class $1 {",
 			"\t$2",
@@ -10,89 +17,55 @@
 			"}"
 		]
 	},
-	"class.inherits": {
-		"prefix": ["class ... < ..."],
+	"Default": {
+		"prefix": ["default"],
 		"body": [
-			"class $1 < $2 {",
-			"\t$3",
-			"\tfunc __init(${4:self}) {",
-			"\t\t$0",
-			"\t}",
-			"}"
+			"default:",
+			"\t$0"
 		]
 	},
-	"else": {
-		"prefix": ["else"],
-		"body": [
-			"else {",
-			"\t$0",
-			"}"
-		]
-	},
-	"elseif": {
-		"prefix": ["elseif ..."],
-		"body": [
-			"elseif $1 {",
-			"\t$0",
-			"}"
-		]
-	},
-	"enum": {
-		"prefix": ["enum ..."],
+	"Enum": {
+		"prefix": ["enum"],
 		"body": [
 			"enum $1 {",
 			"\t$0",
 			"}"
 		]
 	},
-	"for": {
-		"prefix": [
-			"for ... in ...",
-			"for i in ..."
-		],
+	"For Loop": {
+		"prefix": ["for"],
 		"body": [
-			"for ${1:i} in $2 {",
+			"for ${1:i} in ${2:range()} {",
 			"\t$0",
 			"}"
 		]
 	},
-	"for.range": {
-		"prefix": [
-			"for ... in range(...)",
-			"for i in range(...)"
-		],
-		"body": [
-			"for ${1:i} in range($2) {",
-			"\t$0",
-			"}"
-		]
-	},
-	"func": {
-		"prefix": ["func ...(...)"],
+	"Function": {
+		"prefix": ["func"],
 		"body": [
 			"func $1($2) {",
 			"\t$0",
 			"}"
 		]
 	},
-	"func.anonymous": {
-		"prefix": ["func (...)"],
-		"body": [
-			"func ($1) {",
-			"\t$0",
-			"}"
-		]
-	},
-	"if": {
-		"prefix": ["if ..."],
+	"If Statement": {
+		"prefix": ["if"],
 		"body": [
 			"if $1 {",
 			"\t$0",
 			"}"
 		]
 	},
-	"while": {
-		"prefix": ["while ..."],
+	"Switch Statement": {
+		"prefix": ["switch"],
+		"body": [
+			"switch $1 {",
+			"\t$0",
+			"}"
+		]
+	},
+	"While Loop": {
+		"prefix": ["while"],
 		"body": [
 			"while $1 {",
 			"\t$0",

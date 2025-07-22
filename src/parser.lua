@@ -102,6 +102,8 @@ function parser.parseStatement(tokenizedCode)
 			ast.Return,
 			value
 		)
+	elseif token.value == "switch" then
+		return parser.parseSwitchStatement(tokenizedCode)
 	end
 
 	return parser.parseExpression(tokenizedCode)
@@ -128,7 +130,7 @@ function parser.parseClassDefinition(tokenizedCode)
 
 	local inherited
 
-	if tokenizedCode[1].value == "<" then
+	if tokenizedCode[1].value == ":" then
 		shift(tokenizedCode)
 
 		inherited = parser.parseExpression(tokenizedCode)
@@ -146,7 +148,7 @@ function parser.parseClassDefinition(tokenizedCode)
 	elseif tokenizedCode[1].value ~= "{" then
 		print(
 			"error while parsing class definition at line " .. start
-			.. ": expected '{' or '<', got '"
+			.. ": expected '{' or ':', got '"
 			.. tokenizedCode[1].value
 			.. "' instead"
 		)
@@ -236,12 +238,12 @@ function parser.parseEnum(tokenizedCode)
 	local body = {}
 
 	if tokenizedCode[1].value ~= "}" then
-		local case = parser.parseExpression(tokenizedCode, true)
+		local case = shift(tokenizedCode)
 
-		if case.type ~= ast.Identifier then
+		if case.type ~= tokens.identifier then
 			print(
-				"error while parsing enum case at line " .. case.start
-				.. ": expected identifier, got "
+				"error while parsing enum at line " .. start
+				.. ": expected identifier while parsing body, got "
 				.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
 				.. " instead"
 			)
@@ -249,21 +251,42 @@ function parser.parseEnum(tokenizedCode)
 			os.exit()
 		end
 
-		tablex.push(body, case.value)
+		if tokenizedCode[1].value == "(" then
+			shift(tokenizedCode)
+
+			case.value = {
+				name       = case.value,
+				parameters = {parser.parseTypeAnnotation(tokenizedCode)},
+			}
+
+			while tokenizedCode[1].value == "," do
+				shift(tokenizedCode)
+
+				tablex.push(case.value.parameters, parser.parseTypeAnnotation(tokenizedCode))
+			end
+
+			token = shift(tokenizedCode)
+		end
+
+		tablex.push(body, case)
 
 		while tokenizedCode[1].value == "," do
 			shift(tokenizedCode)
+
+			while tokenizedCode[1].type == tokens.eol do
+				shift(tokenizedCode)
+			end
 
 			if tokenizedCode[1].value == "}" then
 				break
 			end
 
-			 case = parser.parseExpression(tokenizedCode, true)
+			case = shift(tokenizedCode)
 
-			if case.type ~= ast.Identifier then
+			if case.type ~= tokens.identifier then
 				print(
-					"error while parsing enum case at line " .. case.start
-					.. ": expected identifier, got "
+					"error while parsing enum at line " .. start
+					.. ": expected identifier while parsing body, got "
 					.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
 					.. " instead"
 				)
@@ -271,8 +294,40 @@ function parser.parseEnum(tokenizedCode)
 				os.exit()
 			end
 
-			tablex.push(body, case.value)
+			if tokenizedCode[1].value == "(" then
+				shift(tokenizedCode)
+
+				case.value = {
+					name       = case.value,
+					parameters = {parser.parseTypeAnnotation(tokenizedCode)},
+				}
+
+				while tokenizedCode[1].value == "," do
+					shift(tokenizedCode)
+
+					tablex.push(case.value.parameters, parser.parseTypeAnnotation(tokenizedCode))
+				end
+
+				token = shift(tokenizedCode)
+
+				if token.value ~= ")" then
+					print(
+						"error while parsing enum at line " .. start
+						.. ": expected ')', got '"
+						.. token.value
+						.. "' instead"
+					)
+
+					os.exit()
+				end
+			end
+
+			tablex.push(body, case)
 		end
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
 	end
 
 	token = shift(tokenizedCode)
@@ -643,6 +698,130 @@ function parser.parseLoop(tokenizedCode)
 end
 
 
+function parser.parseSwitchStatement(tokenizedCode)
+	local start = #newlines
+
+	shift(tokenizedCode)
+
+	local value = parser.parseExpression(tokenizedCode)
+
+	local token = shift(tokenizedCode)
+
+	if token.value ~= "{" then
+		print(
+			"error while parsing switch statement at line " .. start
+			.. ": expected '{' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	while tokenizedCode[1].type == tokens.eol do
+		shift(tokenizedCode)
+	end
+
+	local cases = {}
+
+	while tokenizedCode[1].value == "case" do
+		shift(tokenizedCode)
+
+		local case = {
+			values = {
+				parser.parseExpression(tokenizedCode),
+			},
+		}
+
+		while tokenizedCode[1].value == "," do
+			shift(tokenizedCode)
+
+			tablex.push(case.values, parser.parseExpression(tokenizedCode))
+		end
+
+		token = shift(tokenizedCode)
+
+		if token.value ~= ":" then
+			print(
+				"error while parsing switch statement at line " .. start
+				.. ": expected ':' while parsing case body, got '"
+				.. token.value
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		local body = {}
+
+		while
+			tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}"
+			and tokenizedCode[1].value ~= "case" and tokenizedCode[1].value ~= "default"
+		do
+			tablex.push(body, parser.parseStatement(tokenizedCode))
+		end
+
+		case.body = body
+		tablex.push(cases, case)
+	end
+
+	if #cases == 0 then
+		print("error while parsing switch statement at line " .. start .. ": expected at least 1 case while parsing body, got 0 instead")
+		os.exit()
+	end
+
+	local default = {}
+
+	if tokenizedCode[1].value == "default" then
+		shift(tokenizedCode)
+
+		token = shift(tokenizedCode)
+
+		if token.value ~= ":" then
+			print(
+				"error while parsing switch statement at line " .. start
+				.. ": expected ':' while parsing case body, got '"
+				.. token.value
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
+			tablex.push(default, parser.parseStatement(tokenizedCode))
+		end
+	end
+
+	if #default == 0 then
+		default = nil
+	end
+
+	token = shift(tokenizedCode)
+
+	if token.value ~= "}" then
+		print(
+			"error while parsing switch statement at line " .. start
+			.. ": expected '}' while parsing body, got '"
+			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	return ast.Node(
+		start,
+		ast.SwitchStatement,
+		{
+			value   = value,
+			cases   = cases,
+			default = default,
+		}
+	)
+end
+
+
 function parser.parseVariableDeclaration(tokenizedCode)
 	local start = #newlines
 
@@ -691,24 +870,6 @@ function parser.parseVariableDeclaration(tokenizedCode)
 			end
 		end
 
-		local value = ast.Node(nil, ast.Identifier, "null")
-
-		if #types == 1 then
-			if type(types[1]) == "table" then
-				if types[1].keys == nil then
-					value = ast.Node(nil, ast.Array, {})
-				else
-					value = ast.Node(nil, ast.Dictionary, {})
-				end
-			elseif types[1] == "bool" then
-				value = ast.Node(nil, ast.Identifier, "false")
-			elseif types[1] == "num" then
-				value = ast.Node(nil, ast.Number, 0)
-			elseif types[1] == "str" then
-				value = ast.Node(nil, ast.String, "\"\"")
-			end
-		end
-
 		return ast.Node(
 			start,
 			ast.VariableDeclaration,
@@ -716,7 +877,6 @@ function parser.parseVariableDeclaration(tokenizedCode)
 				name     = name.value,
 				constant = constant,
 				types    = types,
-				value    = value,
 			}
 		)
 	elseif token.value ~= "=" then

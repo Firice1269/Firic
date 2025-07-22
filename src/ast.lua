@@ -31,6 +31,7 @@ ast.NodeType = {
 		IF       = "IfStatement",
 		IMPORT   = "Import",
 		RETURN   = "Return",
+		SWITCH   = "SwitchStatement",
 
 		VARIABLE = {
 			ASSIGNMENT  = "VariableAssignment",
@@ -64,6 +65,7 @@ ast.Loop                = ast.NodeType.STATEMENT.LOOP
 ast.IfStatement         = ast.NodeType.STATEMENT.IF
 ast.Import              = ast.NodeType.STATEMENT.IMPORT
 ast.Return              = ast.NodeType.STATEMENT.RETURN
+ast.SwitchStatement     = ast.NodeType.STATEMENT.SWITCH
 ast.VariableAssignment  = ast.NodeType.STATEMENT.VARIABLE.ASSIGNMENT
 ast.VariableDeclaration = ast.NodeType.STATEMENT.VARIABLE.DECLARATION
 

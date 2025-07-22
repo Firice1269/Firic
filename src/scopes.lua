@@ -215,12 +215,26 @@ scopes.global = scopes.Scope(
 						print("class '" .. argument.value .. "'")
 					elseif argument.type == tokens.enum then
 						print("enum '" .. argument.value .. "'")
-					elseif argument.type == tokens.boolean or argument.type == tokens.null or argument.type == tokens.number then
-						print(argument.value)
 					elseif type(argument.value) == "table" then
-						print(argument.value[1])
+						if #argument.value == 0 then
+							print("instance of class '" .. argument.type .. "'")
+						elseif #argument.value == 1 then
+							print(argument.value[1])
+						else
+							local text = argument.value[1] .. "("
+
+							for i, v in ipairs(argument.value[2]) do
+								text = text .. v.value
+
+								if i ~= #argument.value[2] then
+									text = text .. ", "
+								end
+							end
+
+							print(text .. ")")
+						end
 					else
-						print("instance of class '" .. argument.type .. "'")
+						print(argument.value)
 					end
 				end
 			end
@@ -243,7 +257,7 @@ scopes.global = scopes.Scope(
 			local max
 
 			if arguments[2] == nil then
-				min = tokens.Token(tokens.number, 1, scopes.num)
+				min = tokens.Token(tokens.number, 1)
 				max = arguments[1]
 			else
 				min = arguments[1]
@@ -273,7 +287,7 @@ scopes.global = scopes.Scope(
 			end
 
 			if max.value < min.value then
-				return tokens.Token(tokens.number, min.value, scopes.num)
+				return tokens.Token(tokens.number, min.value)
 			end
 
 			return tokens.Token(
@@ -300,13 +314,13 @@ scopes.global = scopes.Scope(
 			local step
 
 			if arguments[2] == nil then
-				min  = tokens.Token(tokens.number, 1, scopes.num)
+				min  = tokens.Token(tokens.number, 1)
 				max  = arguments[1]
-				step = tokens.Token(tokens.number, 1, scopes.num)
+				step = tokens.Token(tokens.number, 1)
 			elseif arguments[3] == nil then
 				min  = arguments[1]
 				max  = arguments[2]
-				step = tokens.Token(tokens.number, 1, scopes.num)
+				step = tokens.Token(tokens.number, 1)
 			else
 				min  = arguments[1]
 				max  = arguments[2]
@@ -351,11 +365,11 @@ scopes.global = scopes.Scope(
 			for i = min.value, max.value, step.value do
 				tablex.push(
 					range,
-					tokens.Token(tokens.number, i, scopes.num)
+					tokens.Token(tokens.number, i)
 				)
 			end
 
-			return tokens.Token(tokens.array, range, scopes.Array)
+			return tokens.Token(tokens.array, range)
 		end),
 
 
@@ -372,16 +386,16 @@ scopes.global = scopes.Scope(
 			end
 
 			if arguments[1].type == tokens.nativeFunction or arguments[1].type == tokens.userFunction then
-				return tokens.Token(tokens.string, "\"function\"", scopes.str)
+				return tokens.Token(tokens.string, "\"function\"")
 			else
-				return tokens.Token(tokens.string, "\"" .. string.lower(arguments[1].type) .. "\"", scopes.str)
+				return tokens.Token(tokens.string, "\"" .. arguments[1].type .. "\"")
 			end
 		end),
 		--FUNCTIONS
 
 		--VARIABLES
-		["true"]  = tokens.Token(tokens.boolean, true, scopes.bool),
-		["false"] = tokens.Token(tokens.boolean, false, scopes.bool),
+		["true"]  = tokens.Token(tokens.boolean, true),
+		["false"] = tokens.Token(tokens.boolean, false),
 		null      = tokens.Token(tokens.null, "null"),
 		--VARIABLES
 	}
@@ -417,7 +431,7 @@ scopes.Array = scopes.Scope(
 			end
 
 			if #arguments == 0 then
-				return tokens.Token(tokens.array, {}, scopes.Array)
+				return tokens.Token(tokens.array, {})
 			end
 
 			local str = arguments[1]
@@ -428,12 +442,12 @@ scopes.Array = scopes.Scope(
 				str = tostring(arguments[1].value)
 			end
 
-			local self = tokens.Token(tokens.array, {}, scopes.Array)
+			local self = tokens.Token(tokens.array, {})
 
 			for character in str.gmatch(str, ".") do
 				tablex.push(
 					self.value,
-					tokens.Token(tokens.string, "\"" .. character .. "\"", scopes.str)
+					tokens.Token(tokens.string, "\"" .. character .. "\"")
 				)
 			end
 
@@ -455,11 +469,11 @@ scopes.Array = scopes.Scope(
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value == arguments[2].value then
-					return tokens.Token(tokens.boolean, true, scopes.bool)
+					return tokens.Token(tokens.boolean, true)
 				end
 			end
 
-			return tokens.Token(tokens.boolean, false, scopes.bool)
+			return tokens.Token(tokens.boolean, false)
 		end),
 
 
@@ -491,13 +505,13 @@ scopes.Array = scopes.Scope(
 				os.exit()
 			end
 
-			local indices = tokens.Token(tokens.array, {}, scopes.Array)
+			local indices = tokens.Token(tokens.array, {})
 
 			for i, v in ipairs(arguments[1].value) do
 				if v.value == arguments[2].value then
 					tablex.push(
 						indices.value,
-						tokens.Token(tokens.number, i - 1, scopes.num)
+						tokens.Token(tokens.number, i - 1)
 					)
 				end
 			end
@@ -555,7 +569,7 @@ scopes.Array = scopes.Scope(
 				os.exit()
 			end
 
-			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
+			return tokens.Token(tokens.number, #arguments[1].value)
 		end),
 
 
@@ -643,7 +657,7 @@ scopes.Array = scopes.Scope(
 				os.exit()
 			end
 
-			local descending = tokens.Token(tokens.boolean, false, scopes.bool)
+			local descending = tokens.Token(tokens.boolean, false)
 
 			if arguments[2] ~= nil then
 				descending = arguments[2]
@@ -703,17 +717,17 @@ scopes.bool = scopes.Scope(
 			end
 
 			if #arguments == 0 then
-				return tokens.Token(tokens.boolean, false, scopes.bool)
+				return tokens.Token(tokens.boolean, false)
 			end
 
 			local bool
 
 			if arguments[1].type == tokens.null then
-				bool = tokens.Token(tokens.boolean, false, scopes.bool)
+				bool = tokens.Token(tokens.boolean, false)
 			elseif arguments[1].type == tokens.number then
-				bool = tokens.Token(tokens.boolean, arguments[1].value ~= 0, scopes.bool)
+				bool = tokens.Token(tokens.boolean, arguments[1].value ~= 0)
 			elseif arguments[1].type == tokens.string then
-				bool = tokens.Token(tokens.boolean, arguments[1].value == "\"true\"", scopes.bool)
+				bool = tokens.Token(tokens.boolean, arguments[1].value == "\"true\"")
 			end
 
 			return bool
@@ -749,13 +763,13 @@ scopes.Dictionary = scopes.Scope(
 			end
 
 			if #arguments == 0 then
-				return tokens.Token(tokens.dictionary, {}, scopes.Dictionary)
+				return tokens.Token(tokens.dictionary, {})
 			end
 
 			local dict
 
 			if arguments[1].type == tokens.array then
-				dict = tokens.Token(tokens.dictionary, {}, scopes.Dictionary)
+				dict = tokens.Token(tokens.dictionary, {})
 
 				local value = {}
 
@@ -793,11 +807,11 @@ scopes.Dictionary = scopes.Scope(
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value.value == arguments[2].value then
-					return tokens.Token(tokens.boolean, true, scopes.bool)
+					return tokens.Token(tokens.boolean, true)
 				end
 			end
 
-			return tokens.Token(tokens.boolean, false, scopes.bool)
+			return tokens.Token(tokens.boolean, false)
 		end),
 
 
@@ -829,7 +843,7 @@ scopes.Dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local keys = tokens.Token(tokens.array, {}, scopes.Array)
+			local keys = tokens.Token(tokens.array, {})
 
 			for _, v in ipairs(arguments[1].value) do
 				if v.value.value == arguments[2].value then
@@ -884,7 +898,7 @@ scopes.Dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local keys = tokens.Token(tokens.array, {}, scopes.Array)
+			local keys = tokens.Token(tokens.array, {})
 
 			for _, v in ipairs(arguments[1].value) do
 				tablex.push(keys.value, v.key)
@@ -906,7 +920,7 @@ scopes.Dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
+			return tokens.Token(tokens.number, #arguments[1].value)
 		end),
 
 
@@ -944,7 +958,7 @@ scopes.Dictionary = scopes.Scope(
 				os.exit()
 			end
 
-			local values = tokens.Token(tokens.array, {}, scopes.Array)
+			local values = tokens.Token(tokens.array, {})
 
 			for _, v in ipairs(arguments[1].value) do
 				tablex.push(values.value, v.value)
@@ -975,7 +989,7 @@ scopes.num = scopes.Scope(
 			end
 
 			if #arguments == 0 then
-				return tokens.Token(tokens.number, 0, scopes.num)
+				return tokens.Token(tokens.number, 0)
 			end
 
 			local num
@@ -989,19 +1003,18 @@ scopes.num = scopes.Scope(
 							2,
 							#arguments[1].value - 1
 						)
-					),
-					scopes.num
+					)
 				)
 
 				if num.value == nil then
 					return nil
 				end
 			elseif arguments[1].value == "true" then
-				num = tokens.Token(tokens.number, 1, scopes.num)
+				num = tokens.Token(tokens.number, 1)
 			elseif arguments[1].value == "false" then
-				num = tokens.Token(tokens.number, 0, scopes.num)
+				num = tokens.Token(tokens.number, 0)
 			else
-				num = tokens.Token(tokens.number, tonumber(arguments[1].value), scopes.num)
+				num = tokens.Token(tokens.number, tonumber(arguments[1].value))
 			end
 
 			return num
@@ -1037,25 +1050,17 @@ scopes.str = scopes.Scope(
 			end
 
 			if #arguments == 0 then
-				return tokens.Token(tokens.string, "\"\"", scopes.str)
+				return tokens.Token(tokens.string, "\"\"")
 			end
 
 			local str
 
 			if arguments[1].type == tokens.array or arguments[1].type == tokens.dictionary then
-				str = tokens.Token(
-					tokens.string,
-					"\"" .. repr(arguments[1].value) .. "\"",
-					scopes.str
-				)
+				str = tokens.Token(tokens.string, "\"" .. repr(arguments[1].value) .. "\"")
 			elseif arguments[1].type == tokens.string then
 				str = tablex.copy(arguments[1])
 			else
-				str = tokens.Token(
-					tokens.string,
-					"\"" .. tostring(arguments[1].value) .. "\"",
-					scopes.str
-				)
+				str = tokens.Token(tokens.string, "\"" .. tostring(arguments[1].value) .. "\"")
 			end
 
 			return str
@@ -1160,10 +1165,10 @@ scopes.str = scopes.Scope(
 			end
 
 			if "\"" .. string.sub(arguments[1].value, #arguments[1].value - 1, #arguments[1].value - 1) .. "\"" == arguments[2].value then
-				return tokens.Token(tokens.boolean, true, scopes.bool)
+				return tokens.Token(tokens.boolean, true)
 			end
 
-			return tokens.Token(tokens.boolean, false, scopes.bool)
+			return tokens.Token(tokens.boolean, false)
 		end),
 
 
@@ -1179,7 +1184,7 @@ scopes.str = scopes.Scope(
 				os.exit()
 			end
 
-			return tokens.Token(tokens.number, #arguments[1].value, scopes.num)
+			return tokens.Token(tokens.number, #arguments[1].value)
 		end),
 
 
@@ -1241,10 +1246,10 @@ scopes.str = scopes.Scope(
 			end
 
 			if "\"" .. string.sub(arguments[1].value, 2, 2) .. "\"" == arguments[2].value then
-				return tokens.Token(tokens.boolean, true, scopes.bool)
+				return tokens.Token(tokens.boolean, true)
 			end
 
-			return tokens.Token(tokens.boolean, false, scopes.bool)
+			return tokens.Token(tokens.boolean, false)
 		end),
 	}
 )

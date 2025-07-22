@@ -84,7 +84,7 @@ Output:
 
 #### Enums
 
-See [Enums](#enums-1) below.
+See [Enums](#enums-2) below.
 
 #### Nulls
 
@@ -250,6 +250,58 @@ if n == 80 {
 Output:
 ```
 n is 81
+```
+
+### Switch Statements
+
+Switch statements begin with the `switch` keyword, followed by an expression, then the body (enclosed in braces). The body of a switch statement must consist of at least one case (beginning with the `case` keyword, followed by an expression or set of comma-separated expressions, then a colon, and finally, a body of statements) optionally followed by a default case (beginning with the `default` keyword, followed by a colon, then a body of statements). The switch statement will, for each case, check whether its value is equal to that of the case, and if so, execute the body of the case (if the case has multiple comma-separated values, it will execute as long as at least one of those values match the statement's). If none of a switch statement's cases execute, then, if provided, its default case executes.
+
+Example:
+```swift
+let text: str = "hey"
+
+switch text {
+	case "hello", "hey", "hi":
+		print("greetings");
+	case "goodbye", "bye":
+		print("farewell");
+}
+```
+Output:
+```
+greetings
+```
+
+#### Enums
+
+If an enum case (see [Enums](#enums-2) below) is used as a case's value in a switch statement, and doesn't have a payload (see [Payloads](#payloads) below), then it behaves as normal. However, if the enum case has a payload, then its values can also be extracted from the value provided to the switch statement by setting an identifier for each one in the same order as they are presented in the enum's definition. Each identifier will then be set as a variable for that specific case's execution, with its respective value.
+
+Example:
+```swift
+enum Vector {
+	Vector2(num, num),
+	Vector3(num, num, num),
+}
+
+
+let vectors: Array[Vector] = [
+	Vector.Vector2(11, 8),
+	Vector.Vector3(4, 57, 6),
+]
+
+for vector in vectors {
+	switch vector {
+		case Vector.Vector2(x, y):
+			print("(" + x + ", " + y + ")");
+		case Vector.Vector3(x, y, z):
+			print("(" + x + ", " + y + ", " + z + ")");
+	}
+}
+```
+Output:
+```
+(11, 8)
+(4, 57, 6)
 ```
 
 ### Loops
@@ -465,7 +517,7 @@ Foo says "Hello, Bar."
 
 #### Inheritance
 
-Classes can inherit traits from other classes. To do this, define a class, but place a less-than sign (`<`) followed by another class's name before the body. This will allow the class being defined to use all methods and properties from the inherited class.
+Classes can inherit traits from other classes. To do this, define a class, but place a colon followed by another class's name before the body. This will allow the class being defined to use all methods and properties from the inherited class.
 
 Example:
 ```swift
@@ -475,7 +527,7 @@ class Animal {
 }
 
 
-class Cat < Animal {
+class Cat: Animal {
 	type = "Feline"
 
 	func __init(self, name: str): null {
@@ -483,7 +535,7 @@ class Cat < Animal {
 	}
 }
 
-class Dog < Animal {
+class Dog: Animal {
 	type = "Canine"
 
 	func __init(self, name: str): null {
@@ -535,7 +587,7 @@ class Animal {
 }
 
 
-class Cat < Animal {
+class Cat: Animal {
 	type = AnimalType.Feline
 
 	func __init(self, name: str): null {
@@ -543,7 +595,7 @@ class Cat < Animal {
 	}
 }
 
-class Dog < Animal {
+class Dog: Animal {
 	type = AnimalType.Canine
 
 	func __init(self, name: str): null {
@@ -566,6 +618,28 @@ Feline
 
 Dog God
 Canine
+```
+
+#### Payloads
+
+Any given enum case can have a payload, or set of associated values to go with it. To add a payload to a case, place a set of comma-separated type annotations (without the colon) inside parentheses following the case's name. These indicate which types their respective values can be set to. When a case that has a payload is used, all of its payload's values must be included in a comma-separated list (enclosed in parentheses).
+
+Example:
+```swift
+enum Vector {
+	Vector2(num, num),
+	Vector3(num, num, num),
+}
+
+
+let circlePosition: Vector = Vector.Vector2(11, 8)
+let spherePosition: Vector = Vector.Vector3(4, 57, 6)
+print(circlePosition, spherePosition);
+```
+Output:
+```
+Vector2(11, 8)
+Vector3(4, 57, 6)
 ```
 
 ## Using Firic
