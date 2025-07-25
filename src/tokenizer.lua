@@ -80,7 +80,7 @@ function tokenizer.tokenize(sourceCode)
 					if string.find(v[1], "[%a_]") ~= nil then
 						local str = ""
 
-						while #v > 0 and str.find(v[1], "[%w_]") do
+						while #v > 0 and str.find(v[1], "[%w_]") ~= nil do
 							str = str .. tablex.shift(v)
 						end
 

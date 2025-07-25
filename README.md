@@ -4,7 +4,7 @@ Firic is a custom programming language, with its interpreter being written in Lu
 
 ## Features
 
-Currently, Firic only supports things like variables, if statements, loops, and functions, but will support many more features in the future.
+This used to say something else that I forgot about until I noticed it and saw that it was very outdated text.
 
 ### Comments
 
@@ -17,7 +17,7 @@ Example:
 
 ### Data Types
 
-Firic supports 9 basic types: `Array`, `bool` (short for "boolean"), `class`, `Dictionary`, `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `function`.
+Firic supports 9 basic types: `Array`, `bool` (short for "boolean"), `class`, `Dictionary`, `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `function`. In type annotations (see [Type Annotations](#type-annotations) below), there are two extra types: `float` (short for "floating point number") and `int` (short for "integer"). The `num` type encompasses both of these.
 
 #### Type Annotations
 
@@ -31,7 +31,7 @@ To reference a value inside of an array, store the array in a variable (see [Var
 
 Example:
 ```swift
-let array: Array[num | Array[num]] = [
+let array: Array[int | Array[int]] = [
 	20,
 	8,
 	9,
@@ -69,7 +69,7 @@ Referencing a value inside a dictionary is very similar to referencing an elemen
 
 Example:
 ```swift
-let dictionary: Dictionary{null | num: str} = {
+let dictionary: Dictionary{null | int: str} = {
 	null: "",
 	0:    "1",
 	1:    "0",
@@ -220,10 +220,10 @@ Firic uses two different keywords for declaring variables: `let` and `var`. Vari
 
 Example:
 ```swift
-var x: num = 24
+var x: int = 24
 x = 1 
 
-let y: num = -24
+let y: int = -24
 y = -1
 ```
 Output:
@@ -237,7 +237,7 @@ If statements are first initiated with the `if` keyword, followed by a condition
 
 Example:
 ```swift
-let n: num = 81
+let n: int = 81
 
 if n == 80 {
 	print("n is 80");
@@ -285,8 +285,8 @@ enum Vector {
 
 
 let vectors: Array[Vector] = [
-	Vector.Vector2(11, 8),
-	Vector.Vector3(4, 57, 6),
+	Vector.Vector2(11.66, 8.32),
+	Vector.Vector3(4, 56.73, 6.53),
 ]
 
 for vector in vectors {
@@ -300,8 +300,8 @@ for vector in vectors {
 ```
 Output:
 ```
-(11, 8)
-(4, 57, 6)
+(11.66, 8.32)
+(4, 56.73, 6.53)
 ```
 
 ### Loops
@@ -316,7 +316,7 @@ For loops must begin with the `for` keyword, followed by a variable name, then t
 
 Example:
 ```swift
-let fibonacci: Array[num] = [
+let fibonacci: Array[int] = [
 	0,
 	1,
 	1,
@@ -359,7 +359,7 @@ While loops must begin with the `while` keyword, followed by a condition. Then, 
 
 Example:
 ```swift
-var i: num = 1
+var i: int = 1
 
 while i <= 10 {
 	print(i);
@@ -632,14 +632,14 @@ enum Vector {
 }
 
 
-let circlePosition: Vector = Vector.Vector2(11, 8)
-let spherePosition: Vector = Vector.Vector3(4, 57, 6)
+let circlePosition: Vector = Vector.Vector2(11.66, 8.32)
+let spherePosition: Vector = Vector.Vector3(4, 56.73, 6.53)
 print(circlePosition, spherePosition);
 ```
 Output:
 ```
-Vector2(11, 8)
-Vector3(4, 57, 6)
+Vector.Vector2(11.66, 8.32)
+Vector.Vector3(4, 56.73, 6.53)
 ```
 
 ## Using Firic

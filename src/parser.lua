@@ -106,7 +106,7 @@ function parser.parseStatement(tokenizedCode)
 		return parser.parseSwitchStatement(tokenizedCode)
 	end
 
-	return parser.parseExpression(tokenizedCode)
+	return parser.parseVariableAssignment(tokenizedCode)
 end
 
 
@@ -223,7 +223,7 @@ function parser.parseEnum(tokenizedCode)
 	if token.value ~= "{" then
 		print(
 			"error while parsing enum at line " .. start
-			.. ": expected '{' while parsing body, got '"
+			.. ": expected '{' while parsing cases, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -235,7 +235,7 @@ function parser.parseEnum(tokenizedCode)
 		shift(tokenizedCode)
 	end
 
-	local body = {}
+	local cases = {}
 
 	if tokenizedCode[1].value ~= "}" then
 		local case = shift(tokenizedCode)
@@ -243,7 +243,7 @@ function parser.parseEnum(tokenizedCode)
 		if case.type ~= tokens.identifier then
 			print(
 				"error while parsing enum at line " .. start
-				.. ": expected identifier while parsing body, got "
+				.. ": expected identifier while parsing cases, got "
 				.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
 				.. " instead"
 			)
@@ -268,7 +268,7 @@ function parser.parseEnum(tokenizedCode)
 			token = shift(tokenizedCode)
 		end
 
-		tablex.push(body, case)
+		tablex.push(cases, case)
 
 		while tokenizedCode[1].value == "," do
 			shift(tokenizedCode)
@@ -322,7 +322,7 @@ function parser.parseEnum(tokenizedCode)
 				end
 			end
 
-			tablex.push(body, case)
+			tablex.push(cases, case)
 		end
 	end
 
@@ -348,7 +348,7 @@ function parser.parseEnum(tokenizedCode)
 		ast.Enum,
 		{
 			name = name.value,
-			body = body,
+			body = cases,
 		}
 	)
 end
@@ -542,10 +542,6 @@ function parser.parseIfStatement(tokenizedCode)
 		condition = parser.parseExpression(tokenizedCode)
 	end
 
-	while tokenizedCode[1].type == tokens.eol do
-		shift(tokenizedCode)
-	end
-
 	local token = shift(tokenizedCode)
 
 	if token.value ~= "{" then
@@ -578,10 +574,6 @@ function parser.parseIfStatement(tokenizedCode)
 		os.exit()
 	end
 
-	while tokenizedCode[1].type == tokens.eol do
-		shift(tokenizedCode)
-	end
-
 	local statement = ast.Node(
 		start,
 		ast.IfStatement,
@@ -606,13 +598,7 @@ function parser.parseLoop(tokenizedCode)
 	local keyword = shift(tokenizedCode).value
 
 	if tokenizedCode[1].value == "{" then
-		print(
-			"error while parsing" .. keyword .. " loop at line " .. start
-			.. ": expected '{' while parsing body, got '"
-			.. tokenizedCode[1].value
-			.. "' instead"
-		)
-
+		print("error while parsing" .. keyword .. " loop at line " .. start .. ": expected expression, got block instead")
 		os.exit()
 	end
 
@@ -819,6 +805,43 @@ function parser.parseSwitchStatement(tokenizedCode)
 			default = default,
 		}
 	)
+end
+
+
+function parser.parseVariableAssignment(tokenizedCode)
+	local left = parser.parseExpression(tokenizedCode)
+
+	if tokenizedCode[1].type == tokens.assignmentOperator then
+		local start = #newlines
+
+		local operator = shift(tokenizedCode).value
+		local right    = parser.parseExpression(tokenizedCode)
+
+		local token = shift(tokenizedCode)
+
+		if token.type ~= tokens.eol and token.value ~= ";" then
+			print(
+				"error while parsing variable assignment at line " .. start
+				.. ": expected '\\n' or ';', got '"
+				.. token.value
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		left = ast.Node(
+			start,
+			ast.VariableAssignment,
+			{
+				left     = left,
+				operator = operator,
+				right    = right,
+			}
+		)
+	end
+
+	return left
 end
 
 
@@ -1051,44 +1074,7 @@ function parser.parseExpression(tokenizedCode, brackets)
 		end
 	end
 
-	return parser.parseVariableAssignment(tokenizedCode)
-end
-
-
-function parser.parseVariableAssignment(tokenizedCode)
-	local left = parser.parseTernaryExpression(tokenizedCode)
-
-	if tokenizedCode[1].type == tokens.assignmentOperator then
-		local start = #newlines
-
-		local operator = shift(tokenizedCode).value
-		local right    = parser.parseTernaryExpression(tokenizedCode)
-
-		local token = shift(tokenizedCode)
-
-		if token.type ~= tokens.eol and token.value ~= ";" then
-			print(
-				"error while parsing variable assignment at line " .. start
-				.. ": expected '\\n' or ';', got '"
-				.. token.value
-				.. "' instead"
-			)
-
-			os.exit()
-		end
-
-		left = ast.Node(
-			start,
-			ast.VariableAssignment,
-			{
-				left     = left,
-				operator = operator,
-				right    = right,
-			}
-		)
-	end
-
-	return left
+	return parser.parseTernaryExpression(tokenizedCode)
 end
 
 

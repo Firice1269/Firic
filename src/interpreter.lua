@@ -70,6 +70,8 @@ function checkVariableTypes(name, types, value)
 			if type(t) == "table" then
 				if t.keys == nil then
 					if value.type == tokens.array then
+						fail = false
+
 						for i, v in ipairs(value.value) do
 							local f, n, r = checkVariableTypes(name .. "[" .. i - 1 .. "]", t, v)
 							fail = f
@@ -81,6 +83,8 @@ function checkVariableTypes(name, types, value)
 						end
 					end
 				elseif value.type == tokens.dictionary then
+					fail = false
+
 					for i, v in ipairs(value.value) do
 						local f, n, r = checkVariableTypes(name .. ".keys()[" .. i - 1 .. "]", t.keys, v.key)
 						fail = f
@@ -106,10 +110,46 @@ function checkVariableTypes(name, types, value)
 				or t ~= value.type and value.type ~= tokens.nativeFunction and value.type ~= tokens.userFunction
 			then
 				fail = true
+
+				if value.type == tokens.number then
+					if t == "float" then
+						fail = false
+
+						for _, v in ipairs(types) do
+							if v == "int" or v == "num" then
+								goto continue
+							end
+						end
+
+						if string.find(tostring(value.value), "%.") == nil then
+							result = tokens.Token(tokens.number, tonumber(value.value .. ".0"))
+						end
+					elseif t == "int" then
+						fail = false
+
+						for _, v in ipairs(types) do
+							if v == "float" or v == "num" then
+								goto continue
+							end
+						end
+
+						if string.find(tostring(value.value), "%.") ~= nil then
+							if value.value + 0.5 >= math.ceil(value.value) then
+								result = tokens.Token(tokens.number, math.ceil(value.value))
+							else
+								result = tokens.Token(tokens.number, math.floor(value.value))
+							end
+						end
+					elseif t == "num" then
+						fail = false
+					end
+				end
 			else
 				fail = false
 			end
 		end
+
+		::continue::
 	end
 
 	if result.type == tokens.nativeFunction or result.type == tokens.userFunction then
@@ -275,6 +315,10 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 				os.exit()
 			end
 
+			if name == v.name then
+				arguments[i] = tokens.Token(arguments[i].type, result.value, arguments[i].class)
+			end
+
 			scopes.declareVariable(v.name, v.types, arguments[i], i == 1, scope, expression.start)
 		end
 
@@ -347,6 +391,8 @@ function interpreter.evaluateEnum(statement, scope)
 			value = tokens.Token(statement.value.name, {name})
 		else
 			name  = name.name
+
+
 			value = tokens.Token(
 				tokens.nativeFunction,
 				load(
@@ -372,7 +418,7 @@ function interpreter.evaluateEnum(statement, scope)
 						 \
 						for i, v in ipairs(load(\"return " .. string.gsub(tablex.repr(v.value.parameters), "\n", "\\\n") .. "\")()) do \
 							local fail, name, result = checkVariableTypes( \
-								\"" .. name .. "\" .. \"[\" .. i - 1 .. \"]\", \
+								\"" .. name .. "[\" .. i - 1 .. \"]\", \
 								v, \
 								arguments[i] \
 							) \
@@ -380,10 +426,18 @@ function interpreter.evaluateEnum(statement, scope)
 							if fail then \
 								print( \
 									\"error while evaluating case '" .. name .. "' at line \" .. line \
-									.. \": cannot set type of \" .. name .. \" to \" .. result.type \
+									.. \": cannot set type of \" .. name .. \" to '\" .. result.type .. \"'\" \
 								) \
 								\
 								os.exit() \
+							end \
+							 \
+							if name == \"" .. name .. "[\" .. i - 1 .. \"]\" then \
+								arguments[i] = { \
+									type  = arguments[i].type, \
+									value = result.value, \
+									class = arguments[i].class, \
+								} \
 							end \
 							 \
 							table.insert(value.value[2], #value.value[2] + 1, arguments[i]) \
@@ -405,6 +459,8 @@ function interpreter.evaluateEnum(statement, scope)
 			statement.start
 		)
 	end
+
+	tablex.push(scopes.scopes, class)
 
 	return scopes.declareVariable(
 		statement.value.name,
@@ -455,20 +511,21 @@ function interpreter.evaluateFunctionCall(expression, scope)
 		end
 
 		if init.type == tokens.nativeFunction then
-			if functionName == "str" then
-				if arguments[1] ~= nil and arguments[1].type ~= tokens.null and arguments[1].class.variables.__string ~= nil then
-					return interpreter.evaluateClassMethod(
-						ast.Node(
-							nil,
-							ast.FunctionCall,
-							{
-								call      = ast.Node(nil, ast.Identifier, "__str"),
-								arguments = arguments
-							}
-						),
-						arguments[1].class
-					)
-				end
+			if
+				functionName == "str"
+				and arguments[1] ~= nil and arguments[1].type ~= tokens.null and arguments[1].class.variables.__string ~= nil
+			then
+				return interpreter.evaluateClassMethod(
+					ast.Node(
+						nil,
+						ast.FunctionCall,
+						{
+							call      = ast.Node(nil, ast.Identifier, "__str"),
+							arguments = arguments
+						}
+					),
+					arguments[1].class
+				)
 			end
 
 			return init.value(arguments, expression.start) or tokens.Token(tokens.null, "null")
@@ -506,6 +563,10 @@ function interpreter.evaluateFunctionCall(expression, scope)
 					)
 
 					os.exit()
+				end
+
+				if name == v.name then
+					arguments[i] = tokens.Token(arguments[i].type, result.value, arguments[i].class)
 				end
 
 				scopes.declareVariable(v.name, v.types, arguments[i], i == 1, scope, expression.start)
@@ -562,6 +623,10 @@ function interpreter.evaluateFunctionCall(expression, scope)
 				os.exit()
 			end
 
+			if name == v.name then
+				arguments[i] = tokens.Token(arguments[i].type, result.value, arguments[i].class)
+			end
+
 			scopes.declareVariable(v.name, v.types, arguments[i], false, scope, expression.start)
 		end
 
@@ -578,7 +643,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			end
 		end
 
-		local fail, _, result = checkVariableTypes(functionName, func.value.types, value)
+		local fail, name, result = checkVariableTypes(functionName, func.value.types, value)
 
 		if fail then
 			print(
@@ -587,6 +652,10 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			)
 
 			os.exit()
+		end
+
+		if name == functionName then
+			value = tokens.Token(value.type, result.value, value.class)
 		end
 
 		return value
@@ -604,12 +673,10 @@ end
 
 
 function interpreter.evaluateLoop(statement, scope)
-	local parent = scope
-
 	local value
 
 	if statement.value.keyword == "for" then
-		local array = interpreter.evaluate(statement.value.expression.value.right, parent)
+		local array = interpreter.evaluate(statement.value.expression.value.right, scope)
 
 		if array.type ~= tokens.array then
 			print(
@@ -629,7 +696,7 @@ function interpreter.evaluateLoop(statement, scope)
 				break
 			end
 
-			scope = scopes.Scope(parent)
+			scope = scopes.Scope(scope)
 			scopes.declareVariable(statement.value.expression.value.left.value, {}, v, false, scope, statement.start)
 
 			for _, w in ipairs(statement.value.body) do
@@ -650,8 +717,8 @@ function interpreter.evaluateLoop(statement, scope)
 	elseif statement.value.keyword == "while" then
 		local broken = false
 
-		while interpreter.evaluate(statement.value.expression, parent).value and not broken do
-			scope = scopes.Scope(parent)
+		while interpreter.evaluate(statement.value.expression, scope).value and not broken do
+			scope = scopes.Scope(scope)
 
 			for _, v in ipairs(statement.value.body) do
 				v = interpreter.evaluate(v, scope)
@@ -790,8 +857,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 		os.exit()
 	end
 
-	local parent = scope
-	scope        = scopes.Scope(parent)
+	scope = scopes.Scope(scope)
 
 	local value
 
@@ -891,61 +957,49 @@ function interpreter.evaluateSwitchStatement(statement, scope)
 
 	for _, case in ipairs(statement.value.cases) do
 		for _, v in ipairs(case.values) do
-			if
-				value.type ~= tokens.array
-				and value.type ~= tokens.boolean
-				and value.type ~= tokens.dictionary
-				and value.type ~= tokens.null
-				and value.type ~= tokens.number
-				and value.type ~= tokens.string
-				and #value.value ~= 0 and v.type == ast.MemberExpression and v.value.right.type == ast.FunctionCall
-			then
-				if value.value[2] == nil then
-					if value.value == interpreter.evaluate(v, scope).value then
-						return interpreter.evaluateProgram(case.body, scope)
-					else
-						return value
-					end
-				end
+			if v.type == ast.MemberExpression and v.value.right.type == ast.FunctionCall then
+				local left = interpreter.evaluate(v.value.left, scope)
 
-				if value.value[1] == v.value.right.value.call.value then
-					scope = scopes.Scope(scope)
+				if left.type == tokens.enum then
+					if type(value.value) == "table" and value.value[1] == v.value.right.value.call.value then
+						scope = scopes.Scope(scope)
 
-					for i, argument in ipairs(v.value.right.value.arguments) do
-						if argument.type ~= ast.Identifier then
-							print(
-								"error while evaluating switch statement at line " .. argument.start
-								.. ": expected identifier while evaluating enum case, got "
-								.. string.lower(argument.type)
-								.. " instead"
+						for i, argument in ipairs(v.value.right.value.arguments) do
+							if argument.type ~= ast.Identifier then
+								print(
+									"error while evaluating switch statement at line " .. argument.start
+									.. ": expected identifier while evaluating enum case, got "
+									.. string.lower(argument.type)
+									.. " instead"
+								)
+
+								os.exit()
+							end
+
+							scopes.declareVariable(
+								argument.value,
+								{},
+								value.value[2][i],
+								true,
+								scope,
+								statement.start
 							)
-
-							os.exit()
 						end
 
-						scopes.declareVariable(
-							argument.value,
-							{},
-							value.value[2][i],
-							true,
-							scope,
-							statement.start
-						)
+						return interpreter.evaluateProgram(case.body, scope)
 					end
-
-					return interpreter.evaluateProgram(case.body, scope)
+				elseif value.value == left.value then
+					return interpreter.evaluateProgram(case.body, scopes.Scope(scope))
 				end
 			elseif value.value == interpreter.evaluate(v, scope).value then
-				return interpreter.evaluateProgram(case.body, scope)
+				return interpreter.evaluateProgram(case.body, scopes.Scope(scope))
 			end
 		end
 	end
 
-	if statement.value.default == nil then
-		return value
+	if statement.value.default ~= nil then
+		return interpreter.evaluateProgram(statement.value.default, scopes.Scope(scope))
 	end
-
-	return interpreter.evaluateProgram(statement.value.default, scope)
 end
 
 
@@ -1112,6 +1166,10 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 		os.exit()
 	end
 
+	if name == variable.value then
+		result.value = r.value
+	end
+
 	return scopes.assignVariable(variable.value, result, scope, statement.start)
 end
 
@@ -1129,37 +1187,19 @@ function interpreter.evaluateVariableDeclaration(statement, scope)
 		end
 	elseif #types == 1 and statement.value.value == nil then
 		if type(types[1]) == "table" then
-			local call
-
 			if types[1].keys == nil then
-				call = "Array"
+				value = tokens.Token(tokens.array, {})
 			else
-				call = "Dictionary"
+				value = tokens.Token(tokens.dictionary, {})
 			end
-
-			value = interpreter.evaluateFunctionCall(
-				ast.Node(
-					nil,
-					ast.FunctionCall,
-					{
-						call      = ast.Node(nil, ast.Identifier, call),
-						arguments = {},
-					}
-				),
-				scope
-			)
-		elseif types[1] == "bool" or types[1] == "num" or types[1] == "str" then
-			value = interpreter.evaluateFunctionCall(
-				ast.Node(
-					nil,
-					ast.FunctionCall,
-					{
-						call      = ast.Node(nil, ast.Identifier, types[1]),
-						arguments = {},
-					}
-				),
-				scope
-			)
+		elseif types[1] == "bool" then
+			value = tokens.Token(tokens.boolean, false)
+		elseif types[1] == "float" then
+			value = tokens.Token(tokens.number, 0.0)
+		elseif types[1] == "int" then
+			value = tokens.Token(tokens.number, 0)
+		elseif types[1] == "str" then
+			value = tokens.Token(tokens.string, "\"\"")
 		end
 	end
 
@@ -1172,6 +1212,10 @@ function interpreter.evaluateVariableDeclaration(statement, scope)
 		)
 
 		os.exit()
+	end
+
+	if name == statement.value.name then
+		value = tokens.Token(value.type, result.value, value.class)
 	end
 
 	return scopes.declareVariable(

@@ -181,19 +181,10 @@ scopes.global = scopes.Scope(
 
 						print(string.sub(value, 2, #value - 1))
 					elseif argument.type == tokens.nativeFunction then
-						local scope = {
-							scopes.global,
-							scopes.Array,
-							scopes.bool,
-							scopes.Dictionary,
-							scopes.num,
-							scopes.str,
-						}
-
 						local name
 
-						for _, s in ipairs(scope) do
-							for k, v in pairs(s.variables) do
+						for _, scope in ipairs(scopes.scopes) do
+							for k, v in pairs(scope.variables) do
 								if v.value == argument.value then
 									name = k
 								end
@@ -1299,6 +1290,14 @@ scopes.declareVariable(
 	scopes.global,
 	0
 )
+
+
+scopes.scopes = {
+	scopes.global,
+	scopes.Array,
+	scopes.Dictionary,
+	scopes.str,
+}
 
 
 return scopes
