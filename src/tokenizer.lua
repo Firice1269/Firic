@@ -17,7 +17,6 @@ function tokenizer.tokenize(sourceCode)
 		func       = {},
 		["if"]     = {},
 		["in"]     = {},
-		import     = {},
 		let        = {},
 		["return"] = {},
 		switch     = {},

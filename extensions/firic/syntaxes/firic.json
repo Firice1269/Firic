@@ -59,7 +59,7 @@
 			"patterns": [
 				{
 					"name": "keyword.control.firic",
-					"match": "\\b(break|case|continue|default|else|elseif|export|for|if|in|import|return|switch|while)\\b"
+					"match": "\\b(break|case|continue|default|else|elseif|export|for|if|in|return|switch|while)\\b"
 				},
 				{
 					"name": "keyword.other.firic",

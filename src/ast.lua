@@ -29,7 +29,6 @@ ast.NodeType = {
 		ENUM     = "Enum",
 		LOOP     = "Loop",
 		IF       = "IfStatement",
-		IMPORT   = "Import",
 		RETURN   = "Return",
 		SWITCH   = "SwitchStatement",
 

@@ -17,7 +17,7 @@ Example:
 
 ### Data Types
 
-Firic supports 9 basic types: `Array`, `bool` (short for "boolean"), `class`, `Dictionary`, `enum` `null`, `num` (short for "number"), `str` (short for "string"), and `function`. In type annotations (see [Type Annotations](#type-annotations) below), there are two extra types: `float` (short for "floating point number") and `int` (short for "integer"). The `num` type encompasses both of these.
+Firic supports 10 basic types: `Array`, `bool` (short for "boolean"), `Dictionary`, `null`, `num` (short for "number"), `str` (short for "string"), `class`, `enum`, `func` (short for "function"), and `module`. In type annotations (see [Type Annotations](#type-annotations) below), there are two extra types: `float` (short for "floating point number") and `int` (short for "integer"). The `num` type encompasses both of these.
 
 #### Type Annotations
 
@@ -44,7 +44,7 @@ let array: Array[int | Array[int]] = [
 print(array[-2]);
 ```
 Output:
-```lua
+```
 [
 	1,
 	14
@@ -54,10 +54,6 @@ Output:
 #### Booleans
 
 Booleans are values which can be either `true` or `false`.
-
-#### Classes
-
-See [Classes](#classes-1) below.
 
 #### Dictionaries
 
@@ -81,10 +77,6 @@ Output:
 ```
 0
 ```
-
-#### Enums
-
-See [Enums](#enums-2) below.
 
 #### Nulls
 
@@ -113,9 +105,21 @@ Output:
 Escape sequences always begin with a backslash (\).
 ```
 
+#### Classes
+
+See [Classes](#classes-1) below.
+
+#### Enums
+
+See [Enums](#enums-2) below.
+
 #### Functions
 
 See [Functions](#functions-1) below.
+
+#### Modules
+
+See [Modules](#modules-1) below.
 
 ### Operators
 
@@ -206,7 +210,7 @@ Firic supports the following operators:
 The conditional operator (`?:`) takes in three arguments (in other words, it is a ternary operator). If the first argument is `true`, then the expression evaluates to the second argument. Otherwise, it evaluates to the third.
 
 Example:
-```lua
+```swift
 print(1 + 1 == 2 ? false : true);
 ```
 Output:
@@ -385,7 +389,7 @@ Output:
 Functions can be called by the function's name, followed by any arguments to be passed to the function, enclosed in parentheses (`()`).
 
 Example:
-```lua
+```swift
 foo(bar, baz)
 ```
 
@@ -396,7 +400,7 @@ Functions can be defined by a user with the `func` keyword, followed by the func
 Example:
 ```swift
 func multiply(a: num, b: num): num {
-	var result: num = 0
+	var result: num
 
 	for _ in range(a) {
 		result += b
@@ -421,6 +425,8 @@ The `print` function takes in a variable number of arguments and prints all of t
 The `randint` function takes in two arguments (which must both be numbers), the first of which is optional (defaults to `1`), and returns a random integer between those two arguments (inclusive).
 
 The `range` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns an array containing every integer between the first and second arguments (inclusive), skipping over any integer that, when subtracted by the first argument, is not divisible by the third argument.
+
+The `require` function takes in one argument (which must be a string) and returns a module from the file that corresponds to that string (searching in the directory that the current file is in, after searching in `modules`). If no file is found, an error is thrown.
 
 The `typeof` function takes in one argument and returns its type as a string.
 
@@ -496,7 +502,7 @@ Example:
 class Person {
 	var name: str
 
-	func __init(self, name: str): null {
+	func __init(self, name) {
 		self.name = name.lower().capitalize()
 	}
 
@@ -506,8 +512,8 @@ class Person {
 	}
 }
 
-let foo = Person("foo")
-let bar = Person("bar")
+let foo: Person = Person("foo")
+let bar: Person = Person("bar")
 foo.greet(bar);
 ```
 Output:
@@ -530,7 +536,7 @@ class Animal {
 class Cat: Animal {
 	type = "Feline"
 
-	func __init(self, name: str): null {
+	func __init(self, name): null {
 		self.name = name.lower().capitalize()
 	}
 }
@@ -538,14 +544,14 @@ class Cat: Animal {
 class Dog: Animal {
 	type = "Canine"
 
-	func __init(self, name: str): null {
+	func __init(self, name): null {
 		self.name = name.lower().capitalize()
 	}
 }
 
 
-let cat = Cat("tacocat")
-let dog = Dog("dog god")
+let cat: Cat = Cat("tacocat")
+let dog: Dog = Dog("dog god")
 
 print(cat.name, cat.type);
 print();
@@ -590,7 +596,7 @@ class Animal {
 class Cat: Animal {
 	type = AnimalType.Feline
 
-	func __init(self, name: str): null {
+	func __init(self, name): null {
 		self.name = name.lower().capitalize()
 	}
 }
@@ -598,14 +604,14 @@ class Cat: Animal {
 class Dog: Animal {
 	type = AnimalType.Canine
 
-	func __init(self, name: str): null {
+	func __init(self, name): null {
 		self.name = name.lower().capitalize()
 	}
 }
 
 
-let cat = Cat("tacocat")
-let dog = Dog("dog god")
+let cat: Cat = Cat("tacocat")
+let dog: Dog = Dog("dog god")
 
 print(cat.name, cat.type);
 print();
@@ -642,6 +648,34 @@ Vector.Vector2(11.66, 8.32)
 Vector.Vector3(4, 56.73, 6.53)
 ```
 
+### Modules
+
+Modules are returned by the `require` function, and can contain any number of variables, which can be referenced using dot notation. Note that modules can only contain exported variables, which are those whose definitions are preceded by the `export` keyword.
+
+Example:
+
+`module.fi`:
+```typescript
+export let pi: float = 3.14159
+
+
+export func sayHello(): null {
+	print("Hello, world!");
+}
+```
+`main.fi`:
+```swift
+let module: module = require("module")
+
+module.sayHello();
+print(module.pi);
+```
+Output:
+```
+Hello, world!
+3.14159
+```
+
 ## Using Firic
 
-Firic does not have a REPL (but it will in the future). Instead, to run any Firic code, you must create a file with the `.fi` file extension, then run the `main.lua` file with the path of the Firic file (the `firic.bat` (Windows) and `firic.sh` (Linux) files do this).
+There are two main ways to run Firic. One is to create a file with the `.fi` file extension, then run the `main.lua` file with the path of the Firic file (the `firic.bat` (Windows) and `firic.sh` (Linux) files do this). The other is to run the `main.lua` file with no arguments, which will open a REPL.

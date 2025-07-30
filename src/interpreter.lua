@@ -1,9 +1,73 @@
 local ast    = require("src.ast")
+local parser = require("src.parser")
 local scopes = require("src.scopes")
 local tablex = require("dependencies.tablex")
 local tokens = require("src.tokens")
 
 local interpreter = {}
+
+
+scopes.declareVariable(
+	"require",
+	{},
+	tokens.Token(tokens.nativeFunction, function (arguments, line)
+		if #arguments ~= 1 then
+			print(
+				"error while evaluating function 'require' at line ".. line
+				.. ": expected 1 argument, got "
+				.. #arguments
+				.. " instead"
+			)
+
+			os.exit()
+		end
+
+		if arguments[1].type ~= tokens.string then
+			print(
+				"error while evaluating function 'require' at line " .. line
+				.. ": expected string while evaluating argument #1, got '"
+				.. string.lower(arguments[1].type)
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		local name = string.sub(arguments[1].value, 2, #arguments[1].value - 1)
+
+		local paths = {
+			".\\modules\\",
+			string.match(arg[1] or ".\\modules\\", string.gsub(arg[1] or ".\\modules\\", "^(.-)([^\\/]-)(%.[^\\/%.]-)%.?$", "%1")),
+		}
+
+		local module = tokens.Token(
+			tokens.module,
+			name,
+			scopes.Scope(scopes.global)
+		)
+
+		for _, path in ipairs(paths) do
+			if
+				pcall(function ()
+					io.input(path .. name .. ".fi")
+				end)
+			then
+				interpreter.evaluateProgram(
+					{body = parser.parse(io.input():read("a")).value.exports},
+					module.class
+				)
+
+				return module
+			end
+		end
+
+		print("error while evaluating function 'require' at line " .. line .. ": cannot find module '" .. name .. "'")
+		os.exit()
+	end),
+	true,
+	scopes.global,
+	0
+)
 
 
 local function checkArgumentTypes(left, operator, right, line)
@@ -106,7 +170,7 @@ function checkVariableTypes(name, types, value)
 					fail = true
 				end
 			elseif
-				t ~= value.type and t ~= "function"
+				t ~= value.type and t ~= "func"
 				or t ~= value.type and value.type ~= tokens.nativeFunction and value.type ~= tokens.userFunction
 			then
 				fail = true
@@ -153,7 +217,7 @@ function checkVariableTypes(name, types, value)
 	end
 
 	if result.type == tokens.nativeFunction or result.type == tokens.userFunction then
-		result.type = "function"
+		result.type = "func"
 	end
 
 	return fail, name, result
@@ -277,9 +341,9 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 		end
 	end
 
-	local func = interpreter.evaluate(expression.value.call, scope)
-
 	parent, scope.parent = scope.parent, parent
+
+	local func = interpreter.evaluate(expression.value.call, scope)
 
 	local arguments = {}
 
@@ -535,7 +599,6 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			scope.parent.parent = parent
 
 			local instance = tokens.Token(expression.value.call.value, {}, tablex.copy(func.class))
-			instance.class.parent = nil
 
 			if instance.class.inherited ~= nil then
 				instance.class.inherited.parent = nil
@@ -743,15 +806,12 @@ end
 
 function interpreter.evaluateMemberExpression(expression, scope)
 	local left   = expression.value.left
-	local object = interpreter.evaluate(left, scope)
 
-	if left.type == ast.MemberExpression then
-		while left.type == ast.MemberExpression do
-			left = left.value.left
-		end
-	elseif left.type ~= ast.Identifier then
+	if left.type ~= ast.Identifier then
 		left = interpreter.evaluate(left, scope)
 	end
+
+	local object = interpreter.evaluate(left, scope)
 
 	if object.type == tokens.null then
 		print("error while evaluating member expression at line " .. expression.start .. ": object is null")
@@ -772,8 +832,19 @@ function interpreter.evaluateMemberExpression(expression, scope)
 
 	local member = expression.value.right
 
+	if
+		object.type == tokens.module
+		or member.type ~= ast.FunctionCall and not (member.type == ast.IndexExpression and member.value.left.type == ast.FunctionCall)
+	then
+		scope = scopes.Scope(parent, scope.inherited, scope.constants, scope.variables, scope.types)
+	end
+
 	if member.type == ast.IndexExpression then
 		if member.value.left.type == ast.FunctionCall then
+			if object.type == tokens.module then
+				return interpreter.evaluateFunctionCall(member.value.left, scope)
+			end
+
 			table.insert(member.value.left.value.arguments, 1, object)
 			left = interpreter.evaluateClassMethod(member.value.left, scope, parent)
 			table.remove(member.value.left.value.arguments, 1)
@@ -795,6 +866,10 @@ function interpreter.evaluateMemberExpression(expression, scope)
 	elseif member.type == ast.Identifier then
 		return interpreter.evaluateIdentifier(member, scope)
 	elseif member.type == ast.FunctionCall then
+		if object.type == tokens.module then
+			return interpreter.evaluateFunctionCall(member, scope)
+		end
+
 		table.insert(member.value.arguments, 1, object)
 		left = interpreter.evaluateClassMethod(member, scope, parent)
 		table.remove(member.value.arguments, 1)
@@ -862,9 +937,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 	local value
 
 	if condition.value then
-		for _, v in ipairs(statement.body) do
-			value = interpreter.evaluate(v, scope)
-		end
+		value = interpreter.evaluateProgram(statement, scope)
 	end
 
 	if statement[1] ~= nil then
@@ -944,7 +1017,7 @@ end
 function interpreter.evaluateProgram(program, scope)
 	local value = tokens.Token(tokens.null, "null")
 
-	for _, statement in ipairs(program) do
+	for _, statement in ipairs(program.body) do
 		value = interpreter.evaluate(statement, scope)
 	end
 
@@ -986,19 +1059,19 @@ function interpreter.evaluateSwitchStatement(statement, scope)
 							)
 						end
 
-						return interpreter.evaluateProgram(case.body, scope)
+						return interpreter.evaluateProgram(case, scope)
 					end
 				elseif value.value == left.value then
-					return interpreter.evaluateProgram(case.body, scopes.Scope(scope))
+					return interpreter.evaluateProgram(case, scopes.Scope(scope))
 				end
 			elseif value.value == interpreter.evaluate(v, scope).value then
-				return interpreter.evaluateProgram(case.body, scopes.Scope(scope))
+				return interpreter.evaluateProgram(case, scopes.Scope(scope))
 			end
 		end
 	end
 
 	if statement.value.default ~= nil then
-		return interpreter.evaluateProgram(statement.value.default, scopes.Scope(scope))
+		return interpreter.evaluateProgram({body = statement.value.default}, scopes.Scope(scope))
 	end
 end
 
@@ -1196,7 +1269,7 @@ function interpreter.evaluateVariableDeclaration(statement, scope)
 			value = tokens.Token(tokens.boolean, false)
 		elseif types[1] == "float" then
 			value = tokens.Token(tokens.number, 0.0)
-		elseif types[1] == "int" then
+		elseif types[1] == "int" or types[1] == "num" then
 			value = tokens.Token(tokens.number, 0)
 		elseif types[1] == "str" then
 			value = tokens.Token(tokens.string, "\"\"")

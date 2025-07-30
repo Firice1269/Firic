@@ -35,7 +35,7 @@ end
 
 
 function scopes.declareVariable(name, types, value, constant, scope, line)
-	if scope.variables[name] ~= nil or scopes.global.variables[name] ~= nil then
+	if scope.variables[name] ~= nil or scopes.global.constants[name] ~= nil then
 		print("error on line " .. line .. ": '" .. name .. "' is already defined")
 		os.exit()
 	end
@@ -202,10 +202,8 @@ scopes.global = scopes.Scope(
 						print(repr(argument))
 					elseif argument.type == tokens.case then
 						print(argument.type .. "." .. argument.value[1])
-					elseif argument.type == tokens.class then
-						print("class '" .. argument.value .. "'")
-					elseif argument.type == tokens.enum then
-						print("enum '" .. argument.value .. "'")
+					elseif argument.type == tokens.class or argument.type == tokens.enum or argument.type == tokens.module then
+						print(argument.type .. " '" .. argument.value .. "'")
 					elseif type(argument.value) == "table" then
 						if #argument.value == 0 then
 							print("instance of class '" .. argument.type .. "'")

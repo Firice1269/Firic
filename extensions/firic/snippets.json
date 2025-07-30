@@ -43,7 +43,7 @@
 	"Function": {
 		"prefix": ["func"],
 		"body": [
-			"func $1($2) {",
+			"func $1($2)$3 {",
 			"\t$0",
 			"}"
 		]

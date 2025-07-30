@@ -5,7 +5,8 @@ local tokens    = require("src.tokens")
 
 local parser = {}
 
-local newlines = {""}
+local newlines
+local program
 
 
 local function shift(tokenizedCode)
@@ -21,6 +22,24 @@ end
 
 function parser.parseStatement(tokenizedCode)
 	local start = #newlines
+
+	local export = false
+
+	if tokenizedCode[1].value == "export" then
+		shift(tokenizedCode)
+
+		if
+			tokenizedCode[1].value ~= "class"
+			and tokenizedCode[1].value ~= "enum"
+			and tokenizedCode[1].value ~= "func"
+			and tokenizedCode[1].value ~= "let" and tokenizedCode[1].value ~= "var"
+		then
+			print("error while parsing exported statement at line " .. start .. ": exported object must be a variable")
+			os.exit()
+		end
+
+		export = true
+	end
 
 	local token = tokenizedCode[1]
 
@@ -42,7 +61,10 @@ function parser.parseStatement(tokenizedCode)
 
 		return ast.Node(start, ast.Break)
 	elseif token.value == "class" then
-		return parser.parseClassDefinition(tokenizedCode)
+		return {
+			parser.parseClassDefinition(tokenizedCode),
+			export,
+		}
 	elseif token.value == "continue" then
 		shift(tokenizedCode)
 
@@ -61,7 +83,10 @@ function parser.parseStatement(tokenizedCode)
 
 		return ast.Node(start, ast.Continue)
 	elseif token.value == "enum" then
-		return parser.parseEnum(tokenizedCode)
+		return {
+			parser.parseEnum(tokenizedCode),
+			export,
+		}
 	elseif token.value == "func" then
 		shift(tokenizedCode)
 
@@ -72,9 +97,15 @@ function parser.parseStatement(tokenizedCode)
 			os.exit()
 		end
 
-		return func
+		return {
+			func,
+			export,
+		}
 	elseif token.value == "let" or token.value == "var" then
-		return parser.parseVariableDeclaration(tokenizedCode)
+		return {
+			parser.parseVariableDeclaration(tokenizedCode),
+			export,
+		}
 	elseif token.value == "if" then
 		return parser.parseIfStatement(tokenizedCode)
 	elseif token.value == "for" or token.value == "while" then
@@ -172,7 +203,18 @@ function parser.parseClassDefinition(tokenizedCode)
 	local body = {}
 
 	while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
-		tablex.push(body, parser.parseStatement(tokenizedCode))
+		local statement = parser.parseStatement(tokenizedCode)
+
+		if statement ~= nil and #statement == 2 then
+			export    = statement[2]
+			statement = statement[1]
+
+			if export then
+				tablex.push(program.value.exports, statement)
+			end
+		end
+
+		tablex.push(body, statement)
 	end
 
 	token = shift(tokenizedCode)
@@ -492,7 +534,18 @@ function parser.parseFunction(tokenizedCode, start)
 	local body = {}
 
 	while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
-		tablex.push(body, parser.parseStatement(tokenizedCode))
+		local statement = parser.parseStatement(tokenizedCode)
+
+		if statement ~= nil and #statement == 2 then
+			export    = statement[2]
+			statement = statement[1]
+
+			if export then
+				tablex.push(program.value.exports, statement)
+			end
+		end
+
+		tablex.push(body, statement)
 	end
 
 	token = shift(tokenizedCode)
@@ -558,7 +611,18 @@ function parser.parseIfStatement(tokenizedCode)
 	local body = {}
 
 	while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
-		tablex.push(body, parser.parseStatement(tokenizedCode))
+		local statement = parser.parseStatement(tokenizedCode)
+
+		if statement ~= nil and #statement == 2 then
+			export    = statement[2]
+			statement = statement[1]
+
+			if export then
+				tablex.push(program.value.exports, statement)
+			end
+		end
+
+		tablex.push(body, statement)
 	end
 
 	token = shift(tokenizedCode)
@@ -656,7 +720,18 @@ function parser.parseLoop(tokenizedCode)
 	local body = {}
 
 	while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
-		tablex.push(body, parser.parseStatement(tokenizedCode))
+		local statement = parser.parseStatement(tokenizedCode)
+
+		if statement ~= nil and #statement == 2 then
+			export    = statement[2]
+			statement = statement[1]
+
+			if export then
+				tablex.push(program.value.exports, statement)
+			end
+		end
+
+		tablex.push(body, statement)
 	end
 
 	token = shift(tokenizedCode)
@@ -744,7 +819,18 @@ function parser.parseSwitchStatement(tokenizedCode)
 			tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}"
 			and tokenizedCode[1].value ~= "case" and tokenizedCode[1].value ~= "default"
 		do
-			tablex.push(body, parser.parseStatement(tokenizedCode))
+			local statement = parser.parseStatement(tokenizedCode)
+
+			if statement ~= nil and #statement == 2 then
+				export    = statement[2]
+				statement = statement[1]
+
+				if export then
+					tablex.push(program.value.exports, statement)
+				end
+			end
+
+			tablex.push(body, statement)
 		end
 
 		case.body = body
@@ -775,7 +861,18 @@ function parser.parseSwitchStatement(tokenizedCode)
 		end
 
 		while tokenizedCode[1].type ~= tokens.eof and tokenizedCode[1].value ~= "}" do
-			tablex.push(default, parser.parseStatement(tokenizedCode))
+			local statement = parser.parseStatement(tokenizedCode)
+
+			if statement ~= nil and #statement == 2 then
+				export    = statement[2]
+				statement = statement[1]
+
+				if export then
+					tablex.push(program.value.exports, statement)
+				end
+			end
+
+			tablex.push(default, statement)
 		end
 	end
 
@@ -948,7 +1045,7 @@ function parser.parseTypeAnnotation(tokenizedCode)
 
 	local identifier = shift(tokenizedCode)
 
-	if identifier.type ~= tokens.identifier then
+	if identifier.type ~= tokens.identifier and identifier.type ~= tokens.keyword then
 		print(
 			"error while parsing type annotation at line " .. start
 			.. ": expected identifier, got "
@@ -1649,11 +1746,30 @@ end
 function parser.parse(sourceCode)
 	local tokenizedCode = tokenizer.tokenize(sourceCode)
 
-	local program = ast.Node(1, ast.Program)
+	newlines = {""}
+
+	program = ast.Node(
+		0,
+		ast.Program,
+		{
+			body    = {},
+			exports = {},
+		}
+	)
 
 	while tokenizedCode[1].type ~= tokens.eof do
 		local statement = parser.parseStatement(tokenizedCode)
-		tablex.push(program.value, statement)
+
+		if statement ~= nil and #statement == 2 then
+			export    = statement[2]
+			statement = statement[1]
+
+			if export then
+				tablex.push(program.value.exports, statement)
+			end
+		end
+
+		tablex.push(program.value.body, statement)
 	end
 
 	return program
