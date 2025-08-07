@@ -20,6 +20,17 @@ function scopes.Scope(parent, inherited, constants, variables, types)
 end
 
 
+function scopes.copyScope(scope)
+	return scopes.Scope(
+		scope.parent,
+		tablex.copy(scope.inherited),
+		tablex.copy(scope.constants),
+		tablex.copy(scope.variables),
+		tablex.copy(scope.types)
+	)
+end
+
+
 function scopes.findVariable(name, scope, line)
 	if scope.variables[name] ~= nil then
 		return scope
@@ -1047,7 +1058,7 @@ scopes.str = scopes.Scope(
 			if arguments[1].type == tokens.array or arguments[1].type == tokens.dictionary then
 				str = tokens.Token(tokens.string, "\"" .. repr(arguments[1].value) .. "\"")
 			elseif arguments[1].type == tokens.string then
-				str = tablex.copy(arguments[1])
+				str = arguments[1]
 			else
 				str = tokens.Token(tokens.string, "\"" .. tostring(arguments[1].value) .. "\"")
 			end
@@ -1091,22 +1102,6 @@ scopes.str = scopes.Scope(
 			end
 
 			return arguments[1]
-		end),
-
-
-		copy = tokens.Token(tokens.nativeFunction, function (arguments, line)
-			if #arguments - 1 ~= 0 then
-				print(
-					"error while evaluating function 'str.copy' at line " .. line
-					.. ": expected 0 arguments, got "
-					.. #arguments
-					.. " instead"
-				)
-
-				os.exit()
-			end
-
-			return tablex.copy(arguments[1])
 		end),
 
 

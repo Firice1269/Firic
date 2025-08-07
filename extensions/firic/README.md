@@ -84,7 +84,7 @@ Null values (`null`) are those which represent the absence of a value. Functions
 
 #### Strings
 
-Strings are values which represent a body of text, and are always enclosed in quotation marks (`""`). Strings also support the following escape sequences (but more will be added in the future):
+Strings are values which represent a body of text, and are always enclosed in quotation marks (`""`). If a string is next to an expression, identifier, number, or other string, Firic will attempt to concatenate (add) them together. Strings also support the following escape sequences (but more will be added in the future):
 
 `\\`: `\`
 
@@ -95,13 +95,13 @@ Strings are values which represent a body of text, and are always enclosed in qu
 Example:
 ```swift
 print("\"Hello, world!\"\n");
-
+print("1 + 1 = "1 + 1"\n");
 print("Escape sequences always begin with a backslash (\\).");
 ```
 Output:
 ```
 "Hello, world!"
-
+1 + 1 = 2
 Escape sequences always begin with a backslash (\).
 ```
 
@@ -225,7 +225,7 @@ Firic uses two different keywords for declaring variables: `let` and `var`. Vari
 Example:
 ```swift
 var x: int = 24
-x = 1 
+x = 1
 
 let y: int = -24
 y = -1
@@ -233,6 +233,27 @@ y = -1
 Output:
 ```
 error while evaluating variable assignment at line 5: 'y' is a constant
+```
+
+### Block Statements
+
+Block statements are statements which contain a list of other statements enclosed in braces. Block statements, when executed, execute all statements contained therein in order within a new scope. Variables declared in a new scope cannot be referenced outside of that scope, but all variables in a given scope can be referenced inside innermore scopes. However, variables can be shadowed.
+
+Example:
+```swift
+let x: int = 24
+
+{
+	let x = 1
+	print(x);
+}
+
+print(x);
+```
+Output:
+```
+1
+24
 ```
 
 ### If Statements
@@ -248,7 +269,7 @@ if n == 80 {
 } elseif n == 81 {
 	print("n is 81");
 } else {
-	print("n is not 80 or 81, n is " + n);
+	print("n is not 80 or 81, n is "n);
 }
 ```
 Output:
@@ -296,9 +317,9 @@ let vectors: Array[Vector] = [
 for vector in vectors {
 	switch vector {
 		case Vector.Vector2(x, y):
-			print("(" + x + ", " + y + ")");
+			print("("x", "y")");
 		case Vector.Vector3(x, y, z):
-			print("(" + x + ", " + y + ", " + z + ")");
+			print("("x", "y", "z")");
 	}
 }
 ```
@@ -337,7 +358,7 @@ let fibonacci: Array[int] = [
 ]
 
 for i in fibonacci {
-	print("F(" + fibonacci.find(i)[0] + ") = " + i);
+	print("F("fibonacci.find(i)[0]") = "i);
 }
 ```
 Output:
@@ -479,8 +500,6 @@ The `num.__init` function takes in one argument and returns `1` if the argument 
 
 The `str.capitalize` function takes in no arguments, makes the first character of each substring (separated by spaces) in the string an uppercase letter (if possible), and returns the resulting string.
 
-The `str.copy` function returns a copy of the string.
-
 The `str.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
 
 The `str.endswith` function takes in one argument and returns `true` if the string's last character is equal to the argument (or `false` otherwise).
@@ -508,7 +527,7 @@ class Person {
 
 
 	func greet(self, person: Person): null {
-		print(self.name + " says \"Hello, " + person.name +".\"");
+		print(self.name" says \"Hello, "person.name".\"");
 	}
 }
 

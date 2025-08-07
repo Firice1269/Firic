@@ -52,10 +52,9 @@ scopes.declareVariable(
 					io.input(path .. name .. ".fi")
 				end)
 			then
-				interpreter.evaluateProgram(
-					{body = parser.parse(io.input():read("a")).value.exports},
-					module.class
-				)
+				for _, statement in ipairs(parser.parse(io.input():read("a")).value.exports) do
+					interpreter.evaluate(statement, module.class)
+				end
 
 				return module
 			end
@@ -224,6 +223,19 @@ function checkVariableTypes(name, types, value)
 end
 
 
+function interpreter.evaluateBlock(block, scope)
+	local value
+
+	scope = scopes.Scope(scope)
+
+	for _, statement in ipairs(block) do
+		value = interpreter.evaluate(statement, scope)
+	end
+
+	return value
+end
+
+
 function interpreter.evaluateArray(array, scope)
 	local values = {}
 
@@ -307,10 +319,10 @@ function interpreter.evaluateClassDefinition(statement, scope)
 	local inherited = statement.value.inherited
 
 	if inherited ~= nil then
-		inherited = interpreter.evaluateIdentifier(inherited, scope).class
+		inherited = scopes.copyScope(interpreter.evaluateIdentifier(inherited, scope).class)
 	end
 
-	local class = scopes.Scope(scope, tablex.copy(inherited))
+	local class = scopes.Scope(scope, inherited)
 
 	for _, v in ipairs(statement.value.body) do
 		interpreter.evaluate(v, class)
@@ -354,7 +366,7 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 	if func.type == tokens.nativeFunction then
 		return func.value(arguments, expression.start) or tokens.Token(tokens.null, "null")
 	elseif func.type == tokens.userFunction then
-		scope = scopes.Scope(tablex.copy(func.value.scope))
+		scope = scopes.Scope(func.value.scope)
 
 		if #arguments ~= #func.value.parameters then
 			print(
@@ -760,6 +772,7 @@ function interpreter.evaluateLoop(statement, scope)
 			end
 
 			scope = scopes.Scope(scope)
+
 			scopes.declareVariable(statement.value.expression.value.left.value, {}, v, false, scope, statement.start)
 
 			for _, w in ipairs(statement.value.body) do
@@ -937,7 +950,7 @@ function interpreter.evaluateIfStatement(statement, scope, conditions)
 	local value
 
 	if condition.value then
-		value = interpreter.evaluateProgram(statement, scope)
+		value = interpreter.evaluateBlock(statement.body, scope)
 	end
 
 	if statement[1] ~= nil then
@@ -1014,17 +1027,6 @@ function interpreter.evaluateIndexExpression(expression, scope)
 end
 
 
-function interpreter.evaluateProgram(program, scope)
-	local value = tokens.Token(tokens.null, "null")
-
-	for _, statement in ipairs(program.body) do
-		value = interpreter.evaluate(statement, scope)
-	end
-
-	return value
-end
-
-
 function interpreter.evaluateSwitchStatement(statement, scope)
 	local value = interpreter.evaluate(statement.value.value, scope)
 
@@ -1059,19 +1061,19 @@ function interpreter.evaluateSwitchStatement(statement, scope)
 							)
 						end
 
-						return interpreter.evaluateProgram(case, scope)
+						return interpreter.evaluateBlock(case.body, scope)
 					end
 				elseif value.value == left.value then
-					return interpreter.evaluateProgram(case, scopes.Scope(scope))
+					return interpreter.evaluateBlock(case.body, scope)
 				end
 			elseif value.value == interpreter.evaluate(v, scope).value then
-				return interpreter.evaluateProgram(case, scopes.Scope(scope))
+				return interpreter.evaluateBlock(case.body, scope)
 			end
 		end
 	end
 
 	if statement.value.default ~= nil then
-		return interpreter.evaluateProgram({body = statement.value.default}, scopes.Scope(scope))
+		return interpreter.evaluateBlock(statement.value.default, scope)
 	end
 end
 
@@ -1248,7 +1250,7 @@ end
 
 
 function interpreter.evaluateVariableDeclaration(statement, scope)
-	local value = interpreter.evaluate(statement.value.value or ast.Node(nil, ast.Identifier, "null"), scope)
+	local value = interpreter.evaluate(statement.value.value or ast.Node(0, ast.Identifier, "null"), scope)
 
 	local types = statement.value.types
 
@@ -1330,7 +1332,7 @@ function interpreter.evaluate(astNode, scope)
 	elseif astNode.type == ast.Number then
 		return tokens.Token(tokens.number, astNode.value)
 	elseif astNode.type == ast.Program then
-		return interpreter.evaluateProgram(astNode.value, scope)
+		return interpreter.evaluateBlock(astNode.value.body, scope)
 	elseif astNode.type == ast.String then
 		return tokens.Token(tokens.string, astNode.value)
 	elseif astNode.type == ast.SwitchStatement then
@@ -1343,6 +1345,8 @@ function interpreter.evaluate(astNode, scope)
 		return interpreter.evaluateVariableAssignment(astNode, scope)
 	elseif astNode.type == ast.VariableDeclaration then
 		return interpreter.evaluateVariableDeclaration(astNode, scope)
+	elseif astNode.type == nil then
+		return interpreter.evaluateBlock(astNode, scope)
 	else
 		return astNode
 	end

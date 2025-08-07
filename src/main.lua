@@ -5,7 +5,7 @@ local tablex      = require("dependencies.tablex")
 
 
 local function repl()
-	print("Firic 1.3.0")
+	print("Firic 1.3.1")
 
 	local scope = tablex.copy(scopes.global)
 
@@ -18,16 +18,23 @@ local function repl()
 		end
 
 		local bracketCount = 0
+		local str          = false
 
 		for character in string.gmatch(program, ".") do
-			if character == "(" or character == "[" or character == "{" then
-				bracketCount = bracketCount + 1
-			elseif character == ")" or character == "]" or character == "}" then
-				bracketCount = bracketCount - 1
+			if str then
+				if character == "\"" then
+					str = false
+				end
+			else
+				if character == "\"" then
+					str = true
+				elseif character == "(" or character == "[" or character == "{" then
+					bracketCount = bracketCount + 1
+				elseif character == ")" or character == "]" or character == "}" then
+					bracketCount = bracketCount - 1
+				end
 			end
 		end
-
-		local input = ""
 
 		while bracketCount > 0 do
 			local prompt = ""
@@ -37,31 +44,43 @@ local function repl()
 			end
 
 			io.stdout:write(prompt .. " ")
-			input = io.stdin:read("L")
+
+			local input = io.stdin:read("L")
 
 			if input == "exit\n" then
 				os.exit()
 			end
 
 			for character in string.gmatch(input, ".") do
-				if character == "(" or character == "[" or character == "{" then
-					bracketCount = bracketCount + 1
-				elseif character == ")" or character == "]" or character == "}" then
-					bracketCount = bracketCount - 1
+				if str then
+					if character == "\"" then
+						str = false
+					end
+				else
+					if character == "\"" then
+						str = true
+					elseif character == "(" or character == "[" or character == "{" then
+						bracketCount = bracketCount + 1
+					elseif character == ")" or character == "]" or character == "}" then
+						bracketCount = bracketCount - 1
+					end
 				end
 			end
 
 			program = program .. input
 		end
 
-		local value = interpreter.evaluate(parser.parse(program), scope)
+		local value
+
+		for _, statement in ipairs(parser.parse(program).value.body) do
+			value = interpreter.evaluate(statement, scope)
+		end
 
 		if value.value ~= "null" then
 			scopes.global.variables.print.value({value}, 0)
 		end
 	end
 end
-
 
 local function run(file)
 	local extension = string.match(file, "^.+(%..+)$")
@@ -86,7 +105,7 @@ local function run(file)
 		parser.parse(
 			io.input():read("a")
 		),
-		tablex.copy(scopes.global)
+		scopes.global
 	)
 end
 

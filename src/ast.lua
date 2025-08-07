@@ -6,7 +6,7 @@ ast.NodeType = {
 
 	EXPRESSION = {
 		BINARY  = "BinaryExpression",
-		CALL    = "FunctionCall",
+		CALL    = "CallExpression",
 		INDEX   = "IndexExpression",
 		MEMBER  = "MemberExpression",
 		TERNARY = "TernaryExpression",
@@ -42,31 +42,39 @@ ast.NodeType = {
 
 ast.Program = ast.NodeType.PROGRAM
 
-ast.BinaryExpression  = ast.NodeType.EXPRESSION.BINARY
-ast.FunctionCall      = ast.NodeType.EXPRESSION.CALL
-ast.IndexExpression   = ast.NodeType.EXPRESSION.INDEX
-ast.MemberExpression  = ast.NodeType.EXPRESSION.MEMBER
-ast.TernaryExpression = ast.NodeType.EXPRESSION.TERNARY
-ast.UnaryExpression   = ast.NodeType.EXPRESSION.UNARY
 
-ast.Array      = ast.NodeType.LITERAL.ARRAY
-ast.Dictionary = ast.NodeType.LITERAL.DICTIONARY
-ast.Function   = ast.NodeType.LITERAL.FUNCTION
-ast.Identifier = ast.NodeType.LITERAL.IDENTIFIER
-ast.Number     = ast.NodeType.LITERAL.NUMBER
-ast.String     = ast.NodeType.LITERAL.STRING
+ast.expressions = ast.NodeType.EXPRESSION
 
-ast.Break               = ast.NodeType.STATEMENT.BREAK
-ast.ClassDefinition     = ast.NodeType.STATEMENT.CLASS
-ast.Continue            = ast.NodeType.STATEMENT.CONTINUE
-ast.Enum                = ast.NodeType.STATEMENT.ENUM
-ast.Loop                = ast.NodeType.STATEMENT.LOOP
-ast.IfStatement         = ast.NodeType.STATEMENT.IF
-ast.Import              = ast.NodeType.STATEMENT.IMPORT
-ast.Return              = ast.NodeType.STATEMENT.RETURN
-ast.SwitchStatement     = ast.NodeType.STATEMENT.SWITCH
-ast.VariableAssignment  = ast.NodeType.STATEMENT.VARIABLE.ASSIGNMENT
-ast.VariableDeclaration = ast.NodeType.STATEMENT.VARIABLE.DECLARATION
+ast.BinaryExpression  = ast.expressions.BINARY
+ast.FunctionCall      = ast.expressions.CALL
+ast.IndexExpression   = ast.expressions.INDEX
+ast.MemberExpression  = ast.expressions.MEMBER
+ast.TernaryExpression = ast.expressions.TERNARY
+ast.UnaryExpression   = ast.expressions.UNARY
+
+
+ast.literals = ast.NodeType.LITERAL
+
+ast.Array      = ast.literals.ARRAY
+ast.Dictionary = ast.literals.DICTIONARY
+ast.Function   = ast.literals.FUNCTION
+ast.Identifier = ast.literals.IDENTIFIER
+ast.Number     = ast.literals.NUMBER
+ast.String     = ast.literals.STRING
+
+
+ast.statements = ast.NodeType.STATEMENT
+
+ast.Break               = ast.statements.BREAK
+ast.ClassDefinition     = ast.statements.CLASS
+ast.Continue            = ast.statements.CONTINUE
+ast.Enum                = ast.statements.ENUM
+ast.Loop                = ast.statements.LOOP
+ast.IfStatement         = ast.statements.IF
+ast.Return              = ast.statements.RETURN
+ast.SwitchStatement     = ast.statements.SWITCH
+ast.VariableAssignment  = ast.statements.VARIABLE.ASSIGNMENT
+ast.VariableDeclaration = ast.statements.VARIABLE.DECLARATION
 
 
 function ast.Node(start, type, value)
