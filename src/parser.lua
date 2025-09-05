@@ -5,6 +5,7 @@ local tokens    = require("src.tokens")
 
 local parser = {}
 
+local filename
 local newlines
 local program
 local tokenizedCode
@@ -35,7 +36,12 @@ function parser.parseStatement()
 			and tokenizedCode[1].value ~= "func"
 			and tokenizedCode[1].value ~= "let" and tokenizedCode[1].value ~= "var"
 		then
-			print("error while parsing exported statement at line " .. start .. ": exported object must be a variable")
+			print(
+				"error while parsing exported statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "exported object must be a variable"
+			)
+
 			os.exit()
 		end
 
@@ -51,8 +57,9 @@ function parser.parseStatement()
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
 			print(
-				"error while parsing break statement at line " .. start
-				.. ": expected '\\n' or ';', got '"
+				"error while parsing break statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '\\n' or ';', got '"
 				.. tokenizedCode[1].value
 				.. "' instead"
 			)
@@ -73,8 +80,9 @@ function parser.parseStatement()
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
 			print(
-				"error while parsing continue statementat line " .. start
-				.. ": expected '\\n' or ';', got '"
+				"error while parsing continue statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '\\n' or ';', got '"
 				.. tokenizedCode[1].value
 				.. "' instead"
 			)
@@ -96,7 +104,12 @@ function parser.parseStatement()
 		local func = parser.parseFunction(start)
 
 		if func.value.name == nil then
-			print("error while parsing function definition at line " .. start .. ": expected identifier while parsing name, got '(' instead")
+			print(
+				"error while parsing function definition"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected identifier while parsing name, got '(' instead"
+			)
+
 			os.exit()
 		end
 
@@ -120,8 +133,9 @@ function parser.parseStatement()
 
 		if tokenizedCode[1].type ~= tokens.eol and tokenizedCode[1].value ~= ";" then
 			print(
-				"error while parsing return statement at line " .. start
-				.. ": expected '\\n' or ';', got '"
+				"error while parsing return statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '\\n' or ';', got '"
 				.. tokenizedCode[1].value
 				.. "' instead"
 			)
@@ -155,8 +169,8 @@ function parser.parseBlockStatement()
 		local statement = parser.parseStatement()
 
 		if statement ~= nil and #statement == 2 and type(statement[2]) == "boolean" then
-			export    = statement[2]
-			statement = statement[1]
+			local export = statement[2]
+			statement    = statement[1]
 
 			if export then
 				tablex.push(program.value.exports, statement)
@@ -169,7 +183,14 @@ function parser.parseBlockStatement()
 	local token = shift()
 
 	if token.value ~= "}" then
-		print("error while parsing block at line " .. start .. ": expected '}', got '" .. token.value .. "' instead")
+		print(
+			"error while parsing block"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '}', got '"
+			.. token.value
+			.. "' instead"
+		)
+
 		os.exit()
 	end
 
@@ -186,8 +207,9 @@ function parser.parseClassDefinition()
 
 	if name.type ~= tokens.identifier then
 		print(
-			"error while parsing class definition at line " .. start
-			.. ": expected identifier while parsing name, got '"
+			"error while parsing class definition"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected identifier while parsing name, got '"
 			.. name.type
 			.. "' instead"
 		)
@@ -204,18 +226,19 @@ function parser.parseClassDefinition()
 
 		if inherited.type ~= ast.Identifier then
 			print(
-				"error while parsing class definition at line " .. start
-				.. ": expected identifier while parsing inherited class, got "
-				.. string.lower(string.sub(inherited.type, 1, 1)) .. string.sub(inherited.type, 2, #inherited.type)
-				.. " instead"
+				"error while parsing class definition"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected identifier while parsing inherited class, got "
+				.. string.lower(string.sub(inherited.type, 1, 1)) .. string.sub(inherited.type, 2, #inherited.type) .. " instead"
 			)
 
 			os.exit()
 		end
 	elseif tokenizedCode[1].value ~= "{" then
 		print(
-			"error while parsing class definition at line " .. start
-			.. ": expected '{' or ':', got '"
+			"error while parsing class definition"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '{' or ':', got '"
 			.. tokenizedCode[1].value
 			.. "' instead"
 		)
@@ -244,8 +267,9 @@ function parser.parseEnum()
 
 	if name.type ~= ast.Identifier then
 		print(
-			"error while parsing enum at line " .. start
-			.. ": expected identifier while parsing name, got '"
+			"error while parsing enum"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected identifier while parsing name, got '"
 			.. string.sub(string.lower(name.type), 1, 1) .. string.sub(name.type, 2, #name.type)
 			.. "' instead"
 		)
@@ -257,8 +281,9 @@ function parser.parseEnum()
 
 	if token.value ~= "{" then
 		print(
-			"error while parsing enum at line " .. start
-			.. ": expected '{' while parsing cases, got '"
+			"error while parsing enum"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '{' while parsing cases, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -277,10 +302,10 @@ function parser.parseEnum()
 
 		if case.type ~= tokens.identifier then
 			print(
-				"error while parsing enum at line " .. start
-				.. ": expected identifier while parsing cases, got "
-				.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
-				.. " instead"
+				"error while parsing enum"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected identifier while parsing cases, got "
+				.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type) .. " instead"
 			)
 
 			os.exit()
@@ -320,10 +345,10 @@ function parser.parseEnum()
 
 			if case.type ~= tokens.identifier then
 				print(
-					"error while parsing enum at line " .. start
-					.. ": expected identifier while parsing body, got "
-					.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type)
-					.. " instead"
+					"error while parsing enum"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected identifier while parsing body, got "
+					.. string.sub(string.lower(case.type), 1, 1) .. string.sub(case.type, 2, #case.type) .. " instead"
 				)
 
 				os.exit()
@@ -347,8 +372,9 @@ function parser.parseEnum()
 
 				if token.value ~= ")" then
 					print(
-						"error while parsing enum at line " .. start
-						.. ": expected ')', got '"
+						"error while parsing enum"
+						.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+						.. "expected ')', got '"
 						.. token.value
 						.. "' instead"
 					)
@@ -369,8 +395,9 @@ function parser.parseEnum()
 
 	if token.value ~= "}" then
 		print(
-			"error while parsing enum at line " .. start
-			.. ": expected '}' while parsing body, got '"
+			"error while parsing enum"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '}' while parsing body, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -392,8 +419,9 @@ end
 function parser.parseFunction(start)
 	if tokenizedCode[1].type ~= tokens.identifier and tokenizedCode[1].value ~= "(" then
 		print(
-			"error while parsing function definition at line " .. start
-			.. ": expected identifier or '(', got '"
+			"error while parsing function definition"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected identifier or '(', got '"
 			.. tokenizedCode[1].value
 			.. "' instead"
 		)
@@ -411,8 +439,9 @@ function parser.parseFunction(start)
 
 	if token.value ~= "(" then
 		print(
-			"error while parsing function at line " .. start
-			.. ": expected '(' while parsing parameters, got '"
+			"error while parsing function"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '(' while parsing parameters, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -431,10 +460,10 @@ function parser.parseFunction(start)
 
 		if parameter.type ~= ast.Identifier then
 			print(
-				"error while parsing function call at line " .. start
-				.. ": expected identifier while parsing parameters, got "
-				.. string.sub(string.lower(parameter.type), 1, 1) .. string.sub(parameter.type, 2, #parameter.type)
-				.. " instead"
+				"error while parsing function call"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected identifier while parsing parameters, got "
+				.. string.sub(string.lower(parameter.type), 1, 1) .. string.sub(parameter.type, 2, #parameter.type) .. " instead"
 			)
 
 			os.exit()
@@ -463,10 +492,10 @@ function parser.parseFunction(start)
 
 			if parameter.type ~= ast.Identifier then
 				print(
-					"error while parsing function call at line " .. start
-					.. ": expected identifier while parsing parameters, got "
-					.. string.lower(string.sub(parameter.type, 1, 1)) .. string.sub(parameter.type, 2, #parameter.type)
-					.. " instead"
+					"error while parsing function call"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected identifier while parsing parameters, got "
+					.. string.lower(string.sub(parameter.type, 1, 1)) .. string.sub(parameter.type, 2, #parameter.type) .. " instead"
 				)
 
 				os.exit()
@@ -494,8 +523,9 @@ function parser.parseFunction(start)
 
 	if token.value ~= ")" then
 		print(
-			"error while parsing function call at line " .. start
-			.. ": expected ')' while parsing parameters, got '"
+			"error while parsing function call"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected ')' while parsing parameters, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -531,8 +561,9 @@ function parser.parseIfStatement()
 
 	if keyword ~= "else" and tokenizedCode[1].value == "{" then
 		print(
-			"error while parsing " .. keyword .. " statement at line " .. start
-			.. ": expected expression while parsing condition, got '"
+			"error while parsing " .. keyword .. " statement"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected expression while parsing condition, got '"
 			.. tokenizedCode[1].value
 			.. "' instead"
 		)
@@ -569,7 +600,12 @@ function parser.parseLoop()
 	local keyword = shift().value
 
 	if tokenizedCode[1].value == "{" then
-		print("error while parsing" .. keyword .. " loop at line " .. start .. ": expected expression, got block instead")
+		print(
+			"error while parsing" .. keyword .. " loop"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected expression, got block instead"
+		)
+
 		os.exit()
 	end
 
@@ -578,10 +614,9 @@ function parser.parseLoop()
 	if keyword == "for" then
 		if expression.type ~= ast.Identifier then
 			print(
-				"error while parsing for loop at line " .. start
-				.. ": expected identifier while parsing iterator variable declaration, got "
-				.. expression.type
-				.. " instead"
+				"error while parsing for loop"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected identifier while parsing iterator variable declaration, got " .. expression.type .. " instead"
 			)
 
 			os.exit()
@@ -591,8 +626,9 @@ function parser.parseLoop()
 
 		if token.value ~= "in" then
 			print(
-				"error while parsing " .. keyword .. " loop at line " .. start
-				.. ": expected 'in', got '"
+				"error while parsing " .. keyword .. " loop"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected 'in', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -634,8 +670,9 @@ function parser.parseSwitchStatement()
 
 	if token.value ~= "{" then
 		print(
-			"error while parsing switch statement at line " .. start
-			.. ": expected '{' while parsing body, got '"
+			"error while parsing switch statement"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '{' while parsing body, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -668,8 +705,9 @@ function parser.parseSwitchStatement()
 
 		if token.value ~= ":" then
 			print(
-				"error while parsing switch statement at line " .. start
-				.. ": expected ':' while parsing case body, got '"
+				"error while parsing switch statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ':' while parsing case body, got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -686,8 +724,8 @@ function parser.parseSwitchStatement()
 			local statement = parser.parseStatement()
 
 			if statement ~= nil and #statement == 2 and type(statement[2]) == "boolean" then
-				export    = statement[2]
-				statement = statement[1]
+				local export = statement[2]
+				statement    = statement[1]
 
 				if export then
 					tablex.push(program.value.exports, statement)
@@ -702,7 +740,12 @@ function parser.parseSwitchStatement()
 	end
 
 	if #cases == 0 then
-		print("error while parsing switch statement at line " .. start .. ": expected at least 1 case while parsing body, got 0 instead")
+		print(
+			"error while parsing switch statement"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected at least 1 case while parsing body, got 0 instead"
+		)
+
 		os.exit()
 	end
 
@@ -715,8 +758,9 @@ function parser.parseSwitchStatement()
 
 		if token.value ~= ":" then
 			print(
-				"error while parsing switch statement at line " .. start
-				.. ": expected ':' while parsing case body, got '"
+				"error while parsing switch statement"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ':' while parsing case body, got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -728,8 +772,8 @@ function parser.parseSwitchStatement()
 			local statement = parser.parseStatement()
 
 			if statement ~= nil and #statement == 2 and type(statement[2]) == "boolean" then
-				export    = statement[2]
-				statement = statement[1]
+				local export = statement[2]
+				statement    = statement[1]
 
 				if export then
 					tablex.push(program.value.exports, statement)
@@ -748,8 +792,9 @@ function parser.parseSwitchStatement()
 
 	if token.value ~= "}" then
 		print(
-			"error while parsing switch statement at line " .. start
-			.. ": expected '}' while parsing body, got '"
+			"error while parsing switch statement"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '}' while parsing body, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -782,8 +827,9 @@ function parser.parseVariableAssignment()
 
 		if token.type ~= tokens.eol and token.value ~= ";" then
 			print(
-				"error while parsing variable assignment at line " .. start
-				.. ": expected '\\n' or ';', got '"
+				"error while parsing variable assignment"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '\\n' or ';', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -815,10 +861,9 @@ function parser.parseVariableDeclaration()
 
 	if name.type ~= tokens.identifier then
 		print(
-			"error while parsing variable declaration at line " .. start
-			.. ": expected identifier while parsing name, got "
-			.. name.type
-			.. " instead"
+			"error while parsing variable declaration"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected identifier while parsing name, got " .. name.type .. " instead"
 		)
 
 		os.exit()
@@ -837,8 +882,9 @@ function parser.parseVariableDeclaration()
 	if token.type == tokens.eol or token.value == ";" then
 		if constant then
 			print(
-				"error while parsing variable declaration at line " .. start
-				.. ": expected expression while parsing value, got '"
+				"error while parsing variable declaration"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected expression while parsing value, got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -865,9 +911,22 @@ function parser.parseVariableDeclaration()
 		)
 	elseif token.value ~= "=" then
 		print(
-			"error while parsing variable declaration at line " .. start
-			.. ": expected '\\n', ';', or '=', got '"
+			"error while parsing variable declaration"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '\\n', ';', or '=', got '"
 			.. token.value
+			.. "' instead"
+		)
+
+		os.exit()
+	end
+
+	if tokenizedCode[1].type == tokens.eol or tokenizedCode[1].value == ";" then
+		print(
+			"error while parsing variable declaration"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected expression, got '"
+			.. tokenizedCode[1].value
 			.. "' instead"
 		)
 
@@ -890,8 +949,9 @@ function parser.parseVariableDeclaration()
 
 		if token.type ~= tokens.eol and token.value ~= ";" then
 			print(
-				"error while parsing variable declaration at line " .. start
-				.. ": expected '\\n' or ';', got '"
+				"error while parsing variable declaration"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '\\n' or ';', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -911,10 +971,9 @@ function parser.parseTypeAnnotation()
 
 	if identifier.type ~= tokens.identifier and identifier.type ~= tokens.keyword then
 		print(
-			"error while parsing type annotation at line " .. start
-			.. ": expected identifier, got "
-			.. identifier.type
-			.. " instead"
+			"error while parsing type annotation"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected identifier, got " .. identifier.type .. " instead"
 		)
 
 		os.exit()
@@ -938,8 +997,9 @@ function parser.parseTypeAnnotation()
 
 			if token.value ~= "]" then
 				print(
-					"error while parsing type annotation at line " .. start
-					.. ": expected ']', got '"
+					"error while parsing type annotation"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected ']', got '"
 					.. token.value
 					.. "' instead"
 				)
@@ -955,7 +1015,7 @@ function parser.parseTypeAnnotation()
 			},
 		}
 
-		if tokenizedCode[1].value == "{" then
+		if tokenizedCode[1].value == "[" then
 			shift()
 
 			for _, v in ipairs(parser.parseTypeAnnotation()) do
@@ -966,8 +1026,9 @@ function parser.parseTypeAnnotation()
 
 			if token.value ~= ":" then
 				print(
-					"error while parsing type annotation at line " .. start
-					.. ": expected ':', got '"
+					"error while parsing type annotation"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected ':', got '"
 					.. token.value
 					.. "' instead"
 				)
@@ -981,10 +1042,11 @@ function parser.parseTypeAnnotation()
 
 			token = shift()
 
-			if token.value ~= "}" then
+			if token.value ~= "]" then
 				print(
-					"error while parsing type annotation at line " .. start
-					.. ": expected '}', got '"
+					"error while parsing type annotation"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected '}', got '"
 					.. token.value
 					.. "' instead"
 				)
@@ -1077,8 +1139,9 @@ function parser.parseTernaryExpression()
 
 		if token.value ~= ":" then
 			print(
-				"error while parsing ternary expression at line " .. start
-				.. ": expected ':', got '"
+				"error while parsing ternary expression"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ':', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -1334,8 +1397,9 @@ function parser.parsePrimaryExpression()
 
 		if func.name ~= nil then
 			print(
-				"error while parsing anonymous function at line " .. start
-				.. ": expected '(' while parsing parameters, got '"
+				"error while parsing anonymous function"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected '(' while parsing parameters, got '"
 				.. func.name
 				.. "' instead"
 			)
@@ -1351,8 +1415,9 @@ function parser.parsePrimaryExpression()
 
 		if token.value ~= ")" then
 			print(
-				"error while parsing parenthesized expression at line " .. start
-				.. ": expected ')', got '"
+				"error while parsing parenthesized expression"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ')', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -1360,29 +1425,25 @@ function parser.parsePrimaryExpression()
 			os.exit()
 		end
 
+		value = parser.parseIndexExpression(value)
+
 		return value
 	elseif token.value == "[" then
-		return ast.Node(
-			start,
-			ast.Array,
-			parser.parseArray()
-		)
+		return parser.parseIndexExpression(ast.Node(start, ast.Array, parser.parseArray()))
 	elseif token.value == "{" then
-		return ast.Node(
-			start,
-			ast.Dictionary,
-			parser.parseDictionary()
-		)
+		return parser.parseIndexExpression(ast.Node(start, ast.Dictionary, parser.parseDictionary()))
 	elseif token.value == "-" or token.value == "~" or token.value == "!" then
 		local value = parser.parsePrimaryExpression()
 
-		return ast.Node(
-			start,
-			ast.UnaryExpression,
-			{
-				operator = token.value,
-				value    = value,
-			}
+		return parser.parseIndexExpression(
+			ast.Node(
+				start,
+				ast.UnaryExpression,
+				{
+					operator = token.value,
+					value    = value,
+				}
+			)
 		)
 	elseif token.type == tokens.str then
 		local str = ast.Node(
@@ -1411,6 +1472,8 @@ function parser.parsePrimaryExpression()
 			)
 		end
 
+		str = parser.parseIndexExpression(str)
+
 		return str
 	elseif token.type == tokens.identifier then
 		local expression = ast.Node(
@@ -1432,47 +1495,18 @@ function parser.parsePrimaryExpression()
 			end
 		end
 
-		while tokenizedCode[1].value == "[" do
-			shift()
-
-			local right = parser.parseExpression(true)
-
-			token = shift()
-
-			if token.value ~= "]" then
-				print(
-					"error while parsing index expression at line " .. start
-					.. ": expected ']', got '"
-					.. token.value
-					.. "' instead"
-				)
-
-				os.exit()
-			end
-
-			expression = ast.Node(
-				start,
-				ast.IndexExpression,
-				{
-					left  = expression,
-					right = right,
-				}
-			)
-		end
+		expression = parser.parseIndexExpression(expression)
 
 		return expression
 	elseif token.type == tokens.num then
-		return ast.Node(
-			start,
-			ast.Number,
-			token.value
-		)
+		return parser.parseIndexExpression(ast.Node(start, ast.Number, token.value))
 	elseif token.value == ";" then
 		return parser.parseStatement()
 	elseif token.type ~= tokens.eol then
 		print(
-			"error while parsing expression at line " .. start
-			.. ": expected 'func', '(', '[', '{', unary operator, string, identifier, or number; got '"
+			"error while parsing expression"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected 'func', '(', '[', '{', unary operator, string, identifier, or number; got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1489,8 +1523,9 @@ function parser.parseArguments()
 
 	if token.value ~= "(" then
 		print(
-			"error while parsing function call at line " .. start
-			.. ": expected '(' while parsing arguments, got '"
+			"error while parsing function call"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '(' while parsing arguments, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1518,8 +1553,9 @@ function parser.parseArguments()
 
 	if token.value ~= ")" then
 		print(
-			"error while parsing function call at line " .. start
-			.. ": expected ')' while parsing arguments, got '"
+			"error while parsing function call"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected ')' while parsing arguments, got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1558,8 +1594,9 @@ function parser.parseArray()
 
 	if token.value ~= "]" then
 		print(
-			"error while parsing array at line " .. start
-			.. ": expected ']', got '"
+			"error while parsing array"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected ']', got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1587,8 +1624,9 @@ function parser.parseDictionary()
 
 		if token.value ~= ":" then
 			print(
-				"error while parsing dictionary at line " .. start
-				.. ": expected ':', got '"
+				"error while parsing dictionary"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ':', got '"
 				.. token.value
 				.. "' instead"
 			)
@@ -1617,8 +1655,9 @@ function parser.parseDictionary()
 
 			if token.value ~= ":" then
 				print(
-					"error while parsing dictionary at line " .. start
-					.. ": expected ':', got '"
+					"error while parsing dictionary"
+					.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+					.. "expected ':', got '"
 					.. token.value
 					.. "' instead"
 				)
@@ -1640,8 +1679,9 @@ function parser.parseDictionary()
 
 	if token.value ~= "}" then
 		print(
-			"error while parsing dictionary at line " .. start
-			.. ": expected '}', got '"
+			"error while parsing dictionary"
+			.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+			.. "expected '}', got '"
 			.. token.value
 			.. "' instead"
 		)
@@ -1653,8 +1693,46 @@ function parser.parseDictionary()
 end
 
 
-function parser.parse(sourceCode)
-	newlines    = {""}
+function parser.parseIndexExpression(expression)
+	local start = #newlines
+
+	while tokenizedCode[1].value == "[" do
+		shift()
+
+		local right = parser.parseExpression(true)
+
+		local token = shift()
+
+		if token.value ~= "]" then
+			print(
+				"error while parsing index expression"
+				.. "\nin " .. filename .. "\nat line " .. start .. ":\n"
+				.. "expected ']', got '"
+				.. token.value
+				.. "' instead"
+			)
+
+			os.exit()
+		end
+
+		expression = ast.Node(
+			start,
+			ast.IndexExpression,
+			{
+				left  = expression,
+				right = right,
+			}
+		)
+	end
+
+	return expression
+end
+
+
+function parser.parse(sourceCode, input)
+	filename = input
+
+	newlines = {""}
 
 	program = ast.Node(
 		0,
@@ -1665,14 +1743,14 @@ function parser.parse(sourceCode)
 		}
 	)
 
-	tokenizedCode = tokenizer.tokenize(sourceCode)
+	tokenizedCode = tokenizer.tokenize(sourceCode, input)
 
 	while tokenizedCode[1].type ~= tokens.eof do
 		local statement = parser.parseStatement()
 
 		if statement ~= nil and #statement == 2 and type(statement[2]) == "boolean" then
-			export    = statement[2]
-			statement = statement[1]
+			local export = statement[2]
+			statement    = statement[1]
 
 			if export then
 				tablex.push(program.value.exports, statement)

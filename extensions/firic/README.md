@@ -17,7 +17,7 @@ Example:
 
 ### Data Types
 
-Firic supports 10 basic types: `Array`, `bool` (short for "boolean"), `Dictionary`, `null`, `num` (short for "number"), `str` (short for "string"), `class`, `enum`, `func` (short for "function"), and `module`. In type annotations (see [Type Annotations](#type-annotations) below), there are two extra types: `float` (short for "floating point number") and `int` (short for "integer"). The `num` type encompasses both of these.
+Firic supports 10 basic types: [`Array`](#arrays), `bool` (short for "boolean"), [`Dictionary`](#dictionaries), [`null`](#nulls), `num` (short for "number"), `str` (short for "string"), [`Range`](#ranges), [`class`](#classes-1), [`enum`](#enums-2), [`func`](#functions-1) (short for "function"), and [`module`](#modules-1). In [type annotations](#type-annotations), there are two extra types: `float` (short for "floating point number") and `int` (short for "integer"). The `num` type encompasses both of these.
 
 #### Type Annotations
 
@@ -25,9 +25,9 @@ In Firic, the type of a variable or function parameter can be annotated by addin
 
 #### Arrays
 
-Arrays are objects which contain other objects. Arrays can contain any number of values, including none at all, and can contain other arrays. Arrays can be created by enclosing a list of comma-separated values with brackets (`[]`).
+Arrays are objects that contain other objects. Arrays can contain any number of values, including none at all, and can contain other arrays. Arrays can be created by enclosing a list of comma-separated values with brackets (`[]`).
 
-To reference a value inside of an array, store the array in a variable (see [Variables](#variables) below) and reference that variable's name, followed by an expression that evaluates to a number (enclosed in brackets). That number is the index of the value to be referenced. Indices start at 0 and increment for each element in the array, but negative indices are also allowed. Negative indices start at the last item in the array (`array[-4]` would be the fourth-to-last element in `array`, and `array[-1]` would be the last).
+To reference a value inside of an array, store the array in a [variable](#variables) and reference that variable's name, followed by an expression that evaluates to a number (enclosed in brackets). That number is the index of the value to be referenced. Indices start at 0 and increment for each element in the array, but negative indices are also allowed. Negative indices start at the last item in the array (`array[-4]` would be the fourth-to-last element in `array`, and `array[-1]` would be the last).
 
 Example:
 ```swift
@@ -51,13 +51,9 @@ Output:
 ]
 ```
 
-#### Booleans
-
-Booleans are values which can be either `true` or `false`.
-
 #### Dictionaries
 
-Dictionaries are objects which contain other objects, like arrays. However, unlike arrays, dictionaries do not store values with ordered numeric indices. Instead, they store values in keys, which can be of any data type (including arrays and dictionaries) and are defined by the user.
+Dictionaries are objects that contain other objects, like arrays. However, unlike arrays, dictionaries do not store values with ordered numeric indices. Instead, they store values in keys, which can be of any data type (including arrays and dictionaries) and are defined by the user.
 
 To create these key-value pairs, put the key first, then the value, and separate them by a colon. Then, to create a dictionary, simply enclose a list of comma-separated key-value pairs with braces (`{}`). Note that duplicate keys are not permitted.
 
@@ -65,7 +61,7 @@ Referencing a value inside a dictionary is very similar to referencing an elemen
 
 Example:
 ```swift
-let dictionary: Dictionary{null | int: str} = {
+let dictionary: Dictionary[null | int: str] = {
 	null: "",
 	0:    "1",
 	1:    "0",
@@ -80,11 +76,11 @@ Output:
 
 #### Nulls
 
-Null values (`null`) are those which represent the absence of a value. Functions that don't return anything return `null`, as do arrays/dictionaries when you try to reference a value using an index/key that doesn't exist for that object.
+Null values (`null`) are those that represent the absence of a value. Functions that don't return anything return `null`, as do arrays/dictionaries when you try to reference a value using an index/key that doesn't exist for that object.
 
 #### Strings
 
-Strings are values which represent a body of text, and are always enclosed in quotation marks (`""`). If a string is next to an expression, identifier, number, or other string, Firic will attempt to concatenate (add) them together. Strings also support the following escape sequences (but more will be added in the future):
+Strings are values that represent a body of text, and are always enclosed in quotation marks (`""`). If a string is next to an expression, identifier, number, or other string, Firic will attempt to concatenate (add) them together. Strings also support the following escape sequences (but more will be added in the future):
 
 `\\`: `\`
 
@@ -104,6 +100,10 @@ Output:
 1 + 1 = 2
 Escape sequences always begin with a backslash (\).
 ```
+
+#### Ranges
+
+Ranges are objects that represent a range of integers. Each range is represented by three numbers: `start`, `stop`, and `step`, the first and last of which are optional when defining a range (both default to `1` if not provided). When used as an iterator in a [for loop](#for-loops), the loop goes through every integer greater than or equal to `start` and less than or equal to `stop`, skipping over integers that cannot be divided by zero after subtracting `start` from them.
 
 #### Classes
 
@@ -232,7 +232,10 @@ y = -1
 ```
 Output:
 ```
-error while evaluating variable assignment at line 5: 'y' is a constant
+error while evaluating variable assignment
+in main.fi
+at line 5:
+'y' is a constant
 ```
 
 ### Block Statements
@@ -244,7 +247,7 @@ Example:
 let x: int = 24
 
 {
-	let x = 1
+	let x: int = 1
 	print(x);
 }
 
@@ -299,7 +302,7 @@ greetings
 
 #### Enums
 
-If an enum case (see [Enums](#enums-2) below) is used as a case's value in a switch statement, and doesn't have a payload (see [Payloads](#payloads) below), then it behaves as normal. However, if the enum case has a payload, then its values can also be extracted from the value provided to the switch statement by setting an identifier for each one in the same order as they are presented in the enum's definition. Each identifier will then be set as a variable for that specific case's execution, with its respective value.
+If an [enum](#enums-2) case is used as a case's value in a switch statement, and doesn't have a [payload](#payloads), then it behaves as normal. However, if the enum case has a payload, then its values can also be extracted from the value provided to the switch statement by setting an identifier for each one in the same order as they are presented in the enum's definition. Each identifier will then be set as a variable for that specific case's execution, with its respective value.
 
 Example:
 ```swift
@@ -357,8 +360,8 @@ let fibonacci: Array[int] = [
 	144,
 ]
 
-for i in fibonacci {
-	print("F("fibonacci.find(i)[0]") = "i);
+for i in range(0, fibonacci.length() - 1) {
+	print("F("i") = "fibonacci[i]);
 }
 ```
 Output:
@@ -445,8 +448,6 @@ The `print` function takes in a variable number of arguments and prints all of t
 
 The `randint` function takes in two arguments (which must both be numbers), the first of which is optional (defaults to `1`), and returns a random integer between those two arguments (inclusive).
 
-The `range` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns an array containing every integer between the first and second arguments (inclusive), skipping over any integer that, when subtracted by the first argument, is not divisible by the third argument.
-
 The `require` function takes in one argument (which must be a string) and returns a module from the file that corresponds to that string (searching in the directory that the current file is in, after searching in `modules`). If no file is found, an error is thrown.
 
 The `typeof` function takes in one argument and returns its type as a string.
@@ -498,6 +499,9 @@ The `Dictionary.values` function takes in no arguments and returns an array cont
 The `num.__init` function takes in one argument and returns `1` if the argument is `true`, `0` if the argument is `false`, or a number from a string if the string is able to be parsed as a number.
 
 
+The `Range.__init` function takes in three arguments (which must all be numbers), the first and last of which are optional (both default to `1`), and returns a range whose `start`, `stop`, and `step` parameters are equal to the first, second, and third arguments respectively.
+
+
 The `str.capitalize` function takes in no arguments, makes the first character of each substring (separated by spaces) in the string an uppercase letter (if possible), and returns the resulting string.
 
 The `str.decapitalize` function takes in no arguments, makes the first character of the string a lowercase letter (if possible), and returns the resulting string.
@@ -525,9 +529,13 @@ class Person {
 		self.name = name.lower().capitalize()
 	}
 
+	func __str(self) {
+		return self.name
+	}
+
 
 	func greet(self, person: Person): null {
-		print(self.name" says \"Hello, "person.name".\"");
+		print(self" says \"Hello, "person".\"");
 	}
 }
 
@@ -589,9 +597,17 @@ Canine
 
 Magic methods are those which have an additional use to whatever functionality the user gives them. Firic currently supports the following magic methods:
 
-`__init`: initializer
+`__init`: initialization
 
-`__str`: tostring converter
+`__Array`: array conversion
+
+`__bool`: boolean conversion
+
+`__Dictionary`: dictionary conversion
+
+`__num`: number conversion
+
+`__str`: string conversion
 
 ### Enums
 

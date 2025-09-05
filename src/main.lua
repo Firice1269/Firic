@@ -5,7 +5,7 @@ local tablex      = require("dependencies.tablex")
 
 
 local function repl()
-	print("Firic 1.3.1")
+	print("Firic 1.3.2")
 
 	local scope = tablex.copy(scopes.global)
 
@@ -72,8 +72,8 @@ local function repl()
 
 		local value
 
-		for _, statement in ipairs(parser.parse(program).value.body) do
-			value = interpreter.evaluate(statement, scope)
+		for _, statement in ipairs(parser.parse(program, "N/A").value.body) do
+			value = interpreter.evaluate(statement, scope, "N/A")
 		end
 
 		if value.value ~= "null" then
@@ -83,7 +83,7 @@ local function repl()
 end
 
 local function run(file)
-	local extension = string.match(file, "^.+(%..+)$")
+	local _, name, extension = string.match(file, "^(.-)([^\\/]-)(%.[^\\/%.]-)%.?$")
 
 	if extension ~= ".fi" then
 		print("error: expected '.fi' file extension, got '" .. extension .. "' instead")
@@ -103,9 +103,11 @@ local function run(file)
 
 	interpreter.evaluate(
 		parser.parse(
-			io.input():read("a")
+			io.input():read("a"),
+			name .. extension
 		),
-		scopes.global
+		scopes.global,
+		name .. extension
 	)
 end
 

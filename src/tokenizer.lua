@@ -4,7 +4,7 @@ local tokens = require("src.tokens")
 local tokenizer = {}
 
 
-function tokenizer.tokenize(sourceCode)
+function tokenizer.tokenize(sourceCode, input)
 	local KEYWORDS = {
 		["break"]  = {},
 		case       = {},
@@ -155,7 +155,12 @@ function tokenizer.tokenize(sourceCode)
 						end
 
 						if string.sub(str, #str, #str) ~= "\"" then
-							print("error while tokenizing line " .. i .. ": unfinished string literal '" .. string.sub(str, 2, #str) .. "'")
+							print(
+								"error while tokenizing string"
+								.. " in " .. input .. " at line " .. i .. ": "
+								.. "unfinished string literal '" .. string.sub(str, 2, #str) .. "'"
+							)
+
 							os.exit()
 						end
 
@@ -459,7 +464,12 @@ function tokenizer.tokenize(sourceCode)
 							tokens.Token(tokens.bitwiseOperator, tablex.shift(line))
 						)
 					else
-						print("error while tokenizing line " .. i .. ": unexpected character: " .. line[1])
+						print(
+							"error while tokenizing string"
+							.. " in " .. input .. " at line " .. i .. ": "
+							.. "unexpected character '" .. line[1] .. "'"
+						)
+
 						os.exit()
 					end
 				end
