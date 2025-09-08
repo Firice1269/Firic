@@ -1501,7 +1501,15 @@ function parser.parsePrimaryExpression()
 	elseif token.type == tokens.num then
 		return parser.parseIndexExpression(ast.Node(start, ast.Number, token.value))
 	elseif token.value == ";" then
-		return parser.parseStatement()
+		local info = debug.getinfo(14, "nf")
+
+		if string.find(info.name or "", "Statement") then
+			if info.name ~= "parseBlockStatement" or tokenizedCode[1].value ~= "}" then
+				return parser.parseStatement()
+			end
+		else
+			return parser.parseExpression()
+		end
 	elseif token.type ~= tokens.eol then
 		print(
 			"error while parsing expression"

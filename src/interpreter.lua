@@ -110,7 +110,7 @@ local function checkArgumentTypes(left, operator, right, scope, line)
 			end
 
 			if left.type ~= tokens.boolean then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						line,
 						ast.FunctionCall,
@@ -124,7 +124,7 @@ local function checkArgumentTypes(left, operator, right, scope, line)
 			end
 
 			if right.type ~= tokens.boolean then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						line,
 						ast.FunctionCall,
@@ -168,7 +168,7 @@ local function checkArgumentTypes(left, operator, right, scope, line)
 			end
 
 			if left.type ~= tokens.number then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						line,
 						ast.FunctionCall,
@@ -182,7 +182,7 @@ local function checkArgumentTypes(left, operator, right, scope, line)
 			end
 
 			if right.type ~= tokens.number then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						line,
 						ast.FunctionCall,
@@ -376,7 +376,7 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	elseif operator == "+" then
 		if left.type == tokens.string or right.type == tokens.string then
 			if left.type ~= tokens.string then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						expression.start,
 						ast.FunctionCall,
@@ -388,7 +388,7 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 					scope
 				)
 			elseif right.type ~= tokens.string then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						expression.start,
 						ast.FunctionCall,
@@ -407,7 +407,7 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 			)
 		else
 			if left.type ~= tokens.number then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						expression.start,
 						ast.FunctionCall,
@@ -421,7 +421,7 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 			end
 
 			if right.type ~= tokens.number then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						expression.start,
 						ast.FunctionCall,
@@ -724,7 +724,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 
 	local arguments = {}
 
-	for _, v in ipairs(expression.value.arguments) do
+	for i, v in ipairs(expression.value.arguments) do
 		tablex.push(arguments, interpreter.evaluate(v, scope))
 	end
 
@@ -750,13 +750,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 				or functionName == "float" or functionName == "int" or functionName == "num"
 				or functionName == "str"
 				and arguments[1] ~= nil and arguments[1].class ~= nil
-				and (
-					arguments[1].class.variables["__" .. functionName] ~= nil
-					or (
-						arguments[1].class.inherited ~= nil
-						and arguments[1].class.inherited.variables["__" .. functionName] ~= nil
-					)
-				)
+				and scopes.containsVariable("__" .. functionName, arguments[1].class) ~= nil
 			then
 				return interpreter.evaluateClassMethod(
 					ast.Node(
@@ -764,7 +758,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 						ast.FunctionCall,
 						{
 							call      = ast.Node(expression.start, ast.Identifier, "__" .. functionName),
-							arguments = arguments
+							arguments = arguments,
 						}
 					),
 					arguments[1].class
@@ -777,7 +771,7 @@ function interpreter.evaluateFunctionCall(expression, scope)
 			scope               = scopes.Scope(init.value.scope)
 			scope.parent.parent = parent
 
-			local instance = tokens.Token(expression.value.call.value, {}, tablex.copy(func.class))
+			local instance = tokens.Token(expression.value.call.value, {}, scopes.copyScope(func.class))
 
 			if instance.class.inherited ~= nil then
 				instance.class.inherited.parent = nil
@@ -1057,14 +1051,22 @@ function interpreter.evaluateMemberExpression(expression, scope)
 	end
 
 	if member.type == ast.IndexExpression then
-		if member.value.left.type == ast.FunctionCall then
+		left = member.value.left
+
+		if left.type == ast.FunctionCall then
+			local name = left.value.call.value
+
 			if object.type == tokens.module then
-				return interpreter.evaluateFunctionCall(member.value.left, scope)
+				return interpreter.evaluateFunctionCall(left, scope)
 			end
 
-			table.insert(member.value.left.value.arguments, 1, object)
-			left = interpreter.evaluateClassMethod(member.value.left, scope, parent)
-			table.remove(member.value.left.value.arguments, 1)
+			if scopes.findVariable(name, scope, expression.start, filename).constants[name] ~= nil then
+				table.insert(left.value.arguments, 1, object)
+				left = interpreter.evaluateClassMethod(left, scope, parent)
+				table.remove(member.value.left.value.arguments, 1)
+			else
+				left = interpreter.evaluateClassMethod(left, scope, parent)
+			end
 
 			return interpreter.evaluateIndexExpression(
 				ast.Node(
@@ -1083,13 +1085,19 @@ function interpreter.evaluateMemberExpression(expression, scope)
 	elseif member.type == ast.Identifier then
 		return interpreter.evaluateIdentifier(member, scope)
 	elseif member.type == ast.FunctionCall then
+		local name = member.value.call.value
+
 		if object.type == tokens.module then
 			return interpreter.evaluateFunctionCall(member, scope)
 		end
 
-		table.insert(member.value.arguments, 1, object)
-		left = interpreter.evaluateClassMethod(member, scope, parent)
-		table.remove(member.value.arguments, 1)
+		if scopes.findVariable(name, scope, expression.start, filename).constants[name] ~= nil then
+			table.insert(member.value.arguments, 1, object)
+			left = interpreter.evaluateClassMethod(member, scope, parent)
+			table.remove(member.value.arguments, 1)
+		else
+			left = interpreter.evaluateClassMethod(member, scope, parent)
+		end
 
 		return left
 	end
@@ -1409,7 +1417,7 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 	elseif operator == "+=" then
 		if left.type == tokens.string or right.type == tokens.string then
 			if left.type ~= tokens.string then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						statement.start,
 						ast.FunctionCall,
@@ -1421,7 +1429,7 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 					scope
 				)
 			elseif right.type ~= tokens.string then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						statement.start,
 						ast.FunctionCall,
@@ -1440,7 +1448,7 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 			)
 		else
 			if left.type ~= tokens.number then
-				left = interpreter.evaluate(
+				left = interpreter.evaluateFunctionCall(
 					ast.Node(
 						statement.start,
 						ast.FunctionCall,
@@ -1454,7 +1462,7 @@ function interpreter.evaluateVariableAssignment(statement, scope)
 			end
 
 			if right.type ~= tokens.number then
-				right = interpreter.evaluate(
+				right = interpreter.evaluateFunctionCall(
 					ast.Node(
 						statement.start,
 						ast.FunctionCall,

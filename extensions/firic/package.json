@@ -4,7 +4,7 @@
 	"name": "firic",
 	"displayName": "Firic",
 	"description": "Language support for Firic",
-	"version": "1.3.2",
+	"version": "1.3.3",
 	"engines": {"vscode": "^1.22.0"},
 	"categories": ["Programming Languages"],
 	"contributes": {

@@ -32,24 +32,24 @@ end
 
 
 function scopes.containsVariable(name, scope)
-	if scope.variables[name] ~= nil then
-		return true
-	end
+	while true do
+		if scope.variables[name] ~= nil then
+			return true, scope
+		end
 
-	if scope.parent == nil and scope.inherited == nil then
-		return false
-	end
+		if scope.parent == nil and scope.inherited == nil then
+			return false, nil
+		end
 
-	return scopes.containsVariable(name, scope.inherited or scope.parent)
+		scope = scope.inherited or scope.parent
+	end
 end
 
 
 function scopes.findVariable(name, scope, line, input)
-	if scope.variables[name] ~= nil then
-		return scope
-	end
+	local success, result = scopes.containsVariable(name, scope)
 
-	if scope.parent == nil and scope.inherited == nil then
+	if not success then
 		if scopes.global.variables[name] ~= nil then
 			return scopes.global
 		end
@@ -58,7 +58,7 @@ function scopes.findVariable(name, scope, line, input)
 		os.exit()
 	end
 
-	return scopes.findVariable(name, scope.inherited or scope.parent, line, input)
+	return result
 end
 
 

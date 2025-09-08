@@ -5,7 +5,7 @@ local tablex      = require("dependencies.tablex")
 
 
 local function repl()
-	print("Firic 1.3.2")
+	print("Firic 1.3.3")
 
 	local scope = tablex.copy(scopes.global)
 
@@ -66,6 +66,18 @@ local function repl()
 					end
 				end
 			end
+
+			local indentation = ""
+
+			for _ = 1, bracketCount, 1 do
+				indentation = indentation .. "..."
+			end
+
+			if indentation ~= "" then
+				indentation = indentation .. " "
+			end
+
+			io.stdout:write(indentation .. input)
 
 			program = program .. input
 		end
