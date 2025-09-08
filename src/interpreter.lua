@@ -370,6 +370,16 @@ function interpreter.evaluateBinaryExpression(expression, scope)
 	elseif operator == "*" then
 		result = tokens.Token(tokens.number, left.value * right.value)
 	elseif operator == "/" then
+		if right.value == 0 then
+			print(
+				"error\nwhile evaluating binary expression"
+				.. "\nin " .. filename .. "\nat line " .. expression.start .. ":\n"
+				.. "cannot divide by zero"
+			)
+
+			os.exit()
+		end
+
 		result = tokens.Token(tokens.number, left.value / right.value)
 	elseif operator == "%" then
 		result = tokens.Token(tokens.number, left.value % right.value)
@@ -476,7 +486,7 @@ function interpreter.evaluateClassMethod(expression, scope, parent)
 		if expression.start ~= nil then
 			print(
 				"error while evaluating function call"
-					.. "\nin " .. filename .. "\nat line " .. expression.start .. ":\n"
+				.. "\nin " .. filename .. "\nat line " .. expression.start .. ":\n"
 				.. "cannot explicitly call '" .. functionName .. "'"
 			)
 
@@ -1606,3 +1616,4 @@ end
 
 
 return interpreter
+
